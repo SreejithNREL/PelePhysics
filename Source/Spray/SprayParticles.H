@@ -58,10 +58,10 @@ public:
     const int level);
 
   void sprayInjectionfromDPMFile(
-      const amrex::Real time,
-      SprayJet* spray_jet,
-      const amrex::Real sim_dt,
-      const int level);
+    const amrex::Real time,
+    SprayJet* spray_jet,
+    const amrex::Real sim_dt,
+    const int level);
 
   /// \brief General initialization routine for uniformly distributed droplets
   /// @param num_part Number of parcels to initialize in each direction
@@ -322,7 +322,7 @@ public:
   bool injectParticles(
     amrex::Real time, amrex::Real dt, int nstep, int level, int finest_level);
 
-  void WriteSprayInjectionTemporal(amrex::Real time,  int nstep, int level);
+  void WriteSprayInjectionTemporal(amrex::Real time, int nstep, int level);
 
   /// \brief Generalized initializer routine. Calls #InitSprayParticles and
   /// #PostInitRestart
