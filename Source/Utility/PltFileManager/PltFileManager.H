@@ -18,6 +18,9 @@ public:
 
   void readPlotFileData();
 
+  amrex::Real getFlowTimefromPlt();//const std::string& a_pltFileHeader)
+  long int getNstepfromPlt();
+
   void readLevelBoxArray(int a_lev, amrex::BoxArray& a_grid);
 
   void fillPatchFromPlt(

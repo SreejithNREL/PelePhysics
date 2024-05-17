@@ -141,6 +141,30 @@ SprayParticleContainer::estTimestep(int level) const
   return dt;
 }
 
+void SprayParticleContainer::WriteSprayInjectionTemporal(Real time, int nstep, int lev)
+{
+        if (lev != 0)
+                {
+                        return ;
+                }
+        UtilCreateDirectory("temporals", 0755);
+        std::ofstream tmpStateFile;
+        if (ParallelDescriptor::IOProcessor())
+        {
+                for(int n =0; n < m_sprayJets.size(); ++n)
+                        {
+                                SprayJet* js = m_sprayJets[n].get();
+                                std::string tempFileName = "temporals/temp_totalmassinjected_"+js->jet_name()+".out";
+                                tmpStateFile.open(tempFileName.c_str(),std::ios::out | std::ios::app | std::ios_base::binary);
+                                tmpStateFile.precision(12);
+                                tmpStateFile<<time<<" "<<js->m_totalInjMass<<"\n";
+                                tmpStateFile.flush();
+                                tmpStateFile.close();
+                        }
+        }
+
+}
+
 void
 SprayParticleContainer::updateParticles(
   const int& level,

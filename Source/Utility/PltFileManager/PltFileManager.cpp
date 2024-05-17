@@ -34,6 +34,140 @@ PltFileManager::PltFileManager(std::string a_pltFile)
 
   // Read the pltfile metadata only
   readPlotFileMetaData();
+  amrex::Print()<<"\n Sreejith time in PltFileManager "<<m_time;
+}
+
+amrex::Real
+PltFileManager::getFlowTimefromPlt()//const std::string& a_pltFileHeader)
+{
+  Vector<char> fileCharPtr;
+  const std::string pltFileHeader(m_pltFile + "/Header");
+  ParallelDescriptor::ReadAndBcastFile(pltFileHeader, fileCharPtr);
+  std::string fileCharPtrString(fileCharPtr.dataPtr());
+  std::istringstream is(fileCharPtrString, std::istringstream::in);
+
+  std::string line, word;
+
+  // Title line
+  std::getline(is, line);
+
+  // Number of variables
+  m_nvars = 0;
+  is >> m_nvars;
+  GotoNextLine(is);
+
+  // Extract variables names
+  m_vars.resize(m_nvars);
+  for (int n = 0; n < m_nvars; n++) {
+    is >> m_vars[n];
+    GotoNextLine(is);
+  }
+
+  // Get and check space dimension
+  int PLT_SPACEDIM = AMREX_SPACEDIM;
+  is >> PLT_SPACEDIM;
+  GotoNextLine(is);
+  AMREX_ASSERT(PLT_SPACEDIM == AMREX_SPACEDIM);
+
+  // Simulation time
+  is >> m_time;
+  GotoNextLine(is);
+
+  return(m_time);
+}
+
+long int
+PltFileManager::getNstepfromPlt()//const std::string& a_pltFileHeader)
+{
+  Vector<char> fileCharPtr;
+  const std::string pltFileHeader(m_pltFile + "/Header");
+  ParallelDescriptor::ReadAndBcastFile(pltFileHeader, fileCharPtr);
+  std::string fileCharPtrString(fileCharPtr.dataPtr());
+  std::istringstream is(fileCharPtrString, std::istringstream::in);
+
+  std::string line, word;
+  long int nstep;
+
+    // Title line
+    std::getline(is, line);
+
+    // Number of variables
+    m_nvars = 0;
+    is >> m_nvars;
+    GotoNextLine(is);
+
+    // Extract variables names
+    m_vars.resize(m_nvars);
+    for (int n = 0; n < m_nvars; n++) {
+      is >> m_vars[n];
+      GotoNextLine(is);
+    }
+
+    // Get and check space dimension
+    int PLT_SPACEDIM = AMREX_SPACEDIM;
+    is >> PLT_SPACEDIM;
+    GotoNextLine(is);
+    AMREX_ASSERT(PLT_SPACEDIM == AMREX_SPACEDIM);
+
+    // Simulation time
+    is >> m_time;
+    GotoNextLine(is);
+
+    amrex::Print()<<"\n Sreejith: time from plot file "<<m_time<<std::endl;
+
+    // Number of levels
+    is >> m_nlevels;
+    GotoNextLine(is);
+    m_nlevels += 1; // Finest is stored, need to add 1
+
+    // Setup geometry data
+    m_geoms.resize(m_nlevels);
+    m_refRatio.resize(m_nlevels - 1);
+
+    // Level 0 geometry
+    Real prob_lo[AMREX_SPACEDIM];
+    Real prob_hi[AMREX_SPACEDIM];
+    // Low coordinates of domain bounding box
+    std::getline(is, line);
+    {
+      std::istringstream lis(line);
+      int i = 0;
+      while (lis >> word) {
+        prob_lo[i++] = std::stod(word);
+      }
+    }
+
+    // High coordinates of domain bounding box
+    std::getline(is, line);
+    {
+      std::istringstream lis(line);
+      int i = 0;
+      while (lis >> word) {
+        prob_hi[i++] = std::stod(word);
+      }
+    }
+
+    // Set up PltFile domain real box
+    RealBox rb(prob_lo, prob_hi);
+
+    std::getline(is, line);
+    {
+      std::istringstream lis(line);
+      int i = 0;
+      while (lis >> word) {
+        m_refRatio[i++] = std::stoi(word);
+      }
+    }
+
+    // Get levels Domains
+    Vector<Box> Domains(m_nlevels);
+    for (int lev = 0; lev < m_nlevels; ++lev) {
+      is >> Domains[lev];
+    }
+    GotoNextLine(is);
+    is>>nstep;
+
+  return(nstep);
 }
 
 void
@@ -70,6 +204,8 @@ PltFileManager::readGenericPlotfileHeader(const std::string& a_pltFileHeader)
   // Simulation time
   is >> m_time;
   GotoNextLine(is);
+
+  amrex::Print()<<"\n Sreejith: time from plot file "<<m_time<<std::endl;
 
   // Number of levels
   is >> m_nlevels;
