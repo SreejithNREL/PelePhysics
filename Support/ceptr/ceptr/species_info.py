@@ -47,6 +47,9 @@ class SpeciesInfo:
         # number of non QSSA species
         self.n_species = 0
 
+        # list of surface species
+        self.surface_species_list = list()
+
         # all Species
         self.all_species = []
         self.all_species_list = []
@@ -194,12 +197,14 @@ class SpeciesInfo:
             lev_list.append(0)
 
         # Initialize the dataframe
-        scqss_df = pd.DataFrame({
-            "name": name_list,
-            "number": numb_list,
-            "symbol": symb_list,
-            "level": lev_list,
-        })
+        scqss_df = pd.DataFrame(
+            {
+                "name": name_list,
+                "number": numb_list,
+                "symbol": symb_list,
+                "level": lev_list,
+            }
+        )
 
         # Find the list of qss terms that have been filled
         qss_filled = scqss_df["name"].unique()
@@ -227,12 +232,14 @@ class SpeciesInfo:
                         symb_list.append(symb)
                         lev_list.append(level)
 
-            scqss_df = pd.DataFrame({
-                "name": name_list,
-                "number": numb_list,
-                "symbol": symb_list,
-                "level": lev_list,
-            })
+            scqss_df = pd.DataFrame(
+                {
+                    "name": name_list,
+                    "number": numb_list,
+                    "symbol": symb_list,
+                    "level": lev_list,
+                }
+            )
             qss_filled = scqss_df["name"].unique()
 
             level += 1
@@ -259,11 +266,13 @@ class SpeciesInfo:
             symb_list.append(self.nonqssa_species_list[idx])
 
         # Initialize the dataframe
-        sc_df = pd.DataFrame({
-            "name": name_list,
-            "number": numb_list,
-            "symbol": symb_list,
-        })
+        sc_df = pd.DataFrame(
+            {
+                "name": name_list,
+                "number": numb_list,
+                "symbol": symb_list,
+            }
+        )
 
         sc_df["scqss_rely"] = ""
         # Loop over the scqss_df and add in scqss dependence upon sc terms
@@ -290,11 +299,13 @@ class SpeciesInfo:
             symb_list.append(self.nonqssa_species_list[idx])
 
         # Initialize the dataframe
-        wdot_df = pd.DataFrame({
-            "name": name_list,
-            "number": numb_list,
-            "symbol": symb_list,
-        })
+        wdot_df = pd.DataFrame(
+            {
+                "name": name_list,
+                "number": numb_list,
+                "symbol": symb_list,
+            }
+        )
 
         wdot_df["sc_dep"] = ""
         wdot_df["scqss_dep"] = ""

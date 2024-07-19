@@ -1,28 +1,29 @@
 #include "mechanism.H"
-const int rmap[3] = {0, 1, 2};
+const int rmap[NUM_REACTIONS] = {0, 1, 2};
 
 // Returns 0-based map of reaction order
 void
 GET_RMAP(int* _rmap)
 {
-  for (int j = 0; j < 3; ++j) {
+  for (int j = 0; j < NUM_REACTIONS; ++j) {
     _rmap[j] = rmap[j];
   }
 }
 
-// Returns a count of species in a reaction, and their indices
+// Returns a count of gas species in a gas reaction, and their indices
 // and stoichiometric coefficients. (Eq 50)
 void
 CKINU(const int i, int& nspec, int ki[], int nu[])
 {
-  const int ns[3] = {4, 3, 3};
-  const int kiv[12] = {2, 0, 3, 1, 3, 0, 4, 0, 4, 3, 0, 0};
-  const int nuv[12] = {-2, -3, 2, 4, -2, -1, 2, 0, -2, 2, 1, 0};
+  const int ns[NUM_GAS_REACTIONS] = {4, 3, 3};
+  const int kiv[NUM_GAS_REACTIONS * 4] = {2, 0, 3, 1, 3, 0, 4, 0, 4, 3, 0, 0};
+  const int nuv[NUM_GAS_REACTIONS * 4] = {-2, -3, 2,  4, -2, -1,
+                                          2,  0,  -2, 2, 1,  0};
   if (i < 1) {
     // Return max num species per reaction
     nspec = 4;
   } else {
-    if (i > 3) {
+    if (i > NUM_GAS_REACTIONS) {
       nspec = -1;
     } else {
       nspec = ns[i - 1];

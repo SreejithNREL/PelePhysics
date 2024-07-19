@@ -62,7 +62,7 @@
 #define c3h5a_ID 47
 #define c3h3_ID 48
 #define c3h2_ID 49
-#define ch2s_ID 50
+#define ch2_s_ID 50
 #define nc4ket13_ID 51
 #define nc3h7cho_ID 52
 #define nc3h7co_ID 53
@@ -101,10 +101,21 @@
 #define nc7ket42_ID 86
 #define n2_ID 87
 
-#define NUM_ELEMENTS 4
-#define NUM_SPECIES 88
+#define NUM_GAS_ELEMENTS 4    // Elements in the homogeneous phase
+#define NUM_GAS_SPECIES 88    // Species in the homogeneous phase
+#define NUM_GAS_REACTIONS 729 // Reactions in the homogeneous phase
+
+#define SITE_DENSITY 0.000000E+00 // mol/cm^2
+
+#define NUM_SURFACE_ELEMENTS 0  // Additional elements in heterogeneous phase
+#define NUM_SURFACE_SPECIES 0   // Species in the heterogeneous phase
+#define NUM_SURFACE_REACTIONS 0 // Reactions in the heterogeneous phase
+
+#define NUM_ELEMENTS (NUM_GAS_ELEMENTS + NUM_SURFACE_ELEMENTS)
+#define NUM_SPECIES (NUM_GAS_SPECIES + NUM_SURFACE_SPECIES)
+#define NUM_REACTIONS (NUM_GAS_REACTIONS + NUM_SURFACE_REACTIONS)
+
 #define NUM_IONS 0
-#define NUM_REACTIONS 729
 
 #define NUM_FIT 4
 
