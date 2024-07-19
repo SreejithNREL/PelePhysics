@@ -12,7 +12,7 @@ SprayJet::SprayJet(const std::string& jet_name, const amrex::Geometry& geom)
 
 
 
-  ps.get("read_from_dpm_file", m_use_Fluentdpmfile);
+  ps.query("read_from_dpm_file", m_use_Fluentdpmfile);
   if(m_use_Fluentdpmfile)
   {
 	  if(AMREX_SPACEDIM!=3)
