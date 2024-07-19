@@ -53,7 +53,7 @@ SprayParticleContainer::sprayInjectionfromDPMFile(
 		SprayUnits SPU;
 		const SprayData* fdat = m_sprayData;
 
-		while(abs(time-dt-spray_jet->m_cur_inj_flw_time)<1E-15 || time-dt>=spray_jet->m_cur_inj_flw_time)
+		while(fabs(time-dt-spray_jet->m_cur_inj_flw_time)<1e-15 || time-dt>=spray_jet->m_cur_inj_flw_time)
 		{
 			//Line numbers in the dpm file
 			long int lineno_current_dpm_time_begin=0;
