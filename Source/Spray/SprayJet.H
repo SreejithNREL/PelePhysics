@@ -362,7 +362,7 @@ public:
   bool is_dpm_periodic = true;
 
   amrex::Real m_cur_inj_dpm_time =
-    0.0; // The current DPM time at which injection has occured
+    0.0; // The current DPM time at which injection has occurred
   amrex::Real m_nxt_inj_dpm_time =
     0.0; // The next DPM time at which injection is to occur
   amrex::Real m_cur_inj_flw_time =
