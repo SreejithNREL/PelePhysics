@@ -70,27 +70,20 @@ public:
   // Call this before using spray jet
   bool jet_active(const amrex::Real time) const
   {
-	  if(!m_use_Fluentdpmfile)
-	  {
-		  if (m_jetDia < 0.)
-		  {
-			  amrex::Abort("Jet diameter is not set");
-		  }
-		  else if (m_avgDia < 0.)
-		  {
-			  amrex::Abort("Average droplet diameter is not set");
-		  }
-		  else if (m_jetT < 0.)
-		  {
-			  amrex::Abort("Droplet temperature is not set");
-		  }
-	  }
-	  bool check = true;
-	  if (time < m_startTime || time > m_endTime)
-	  {
-		  check = false;
-	  }
-	  return check;
+    if (!m_use_Fluentdpmfile) {
+      if (m_jetDia < 0.) {
+        amrex::Abort("Jet diameter is not set");
+      } else if (m_avgDia < 0.) {
+        amrex::Abort("Average droplet diameter is not set");
+      } else if (m_jetT < 0.) {
+        amrex::Abort("Droplet temperature is not set");
+      }
+    }
+    bool check = true;
+    if (time < m_startTime || time > m_endTime) {
+      check = false;
+    }
+    return check;
   }
 
   inline bool hollow_spray() const { return m_hollowSpray; }
@@ -102,29 +95,27 @@ public:
 
   amrex::Real get_avg_Y(const int spf) const { return m_jetY[spf]; }
 
-  bool use_FluentDPMFile(){return m_use_Fluentdpmfile;}
+  bool use_FluentDPMFile() { return m_use_Fluentdpmfile; }
 
   void set_initial_injection_flow_time(amrex::Real time)
   {
-	  m_flow_time_initial_injection=time;
+    m_flow_time_initial_injection = time;
   }
 
   void set_initial_injection_dpm_time(amrex::Real time)
   {
-	  m_dpm_time_initial_injection=time;
+    m_dpm_time_initial_injection = time;
   }
 
   void set_final_injection_flow_time()
   {
-	  if(is_dpm_periodic)
-	  {
-		  m_flow_time_final_injection=1E8;
-	  }
-	  else
-	  {
-		  m_flow_time_final_injection=m_flow_time_initial_injection+m_dpm_time_final;
-		  m_endTime=m_flow_time_final_injection;
-	  }
+    if (is_dpm_periodic) {
+      m_flow_time_final_injection = 1E8;
+    } else {
+      m_flow_time_final_injection =
+        m_flow_time_initial_injection + m_dpm_time_final;
+      m_endTime = m_flow_time_final_injection;
+    }
   }
 
   void set_jet_vel(amrex::Real jet_vel) { m_jetVel = jet_vel; }
@@ -146,10 +137,7 @@ public:
     }
   }
 
-  void set_jet_endtime(amrex::Real end_time)
-  {
-	  m_endTime =end_time;
-  }
+  void set_jet_endtime(amrex::Real end_time) { m_endTime = end_time; }
 
   void set_jet_cent(amrex::RealVect jet_cent, const amrex::Geometry& geom)
   {
@@ -178,28 +166,30 @@ public:
     }
   }
 
-  void set_override_injection_plane(int dir,amrex::Real loc)
+  void set_override_injection_plane(int dir, amrex::Real loc)
   {
-	  m_override_inj_plane_dir=dir;
-	  m_override_inj_plane_loc=loc;
+    m_override_inj_plane_dir = dir;
+    m_override_inj_plane_loc = loc;
   }
 
-  void set_dpm_periodic(bool b)
+  void set_dpm_periodic(bool b) { is_dpm_periodic = b; }
+
+  amrex::Real get_flow_time_initial_injection()
   {
-	  is_dpm_periodic=b;
+    return m_flow_time_initial_injection;
+  }
+  amrex::Real get_dpm_time_initial_injection()
+  {
+    return m_dpm_time_initial_injection;
   }
 
-  amrex::Real get_flow_time_initial_injection(){return m_flow_time_initial_injection;}
-  amrex::Real get_dpm_time_initial_injection(){return m_dpm_time_initial_injection;}
+  amrex::Real dpm_final_time() { return m_dpm_time_final; }
 
-
-  amrex::Real dpm_final_time()
+  int get_override_injection_plane_dir() { return m_override_inj_plane_dir; }
+  amrex::Real get_override_injection_plane_loc()
   {
-	  return m_dpm_time_final;
+    return m_override_inj_plane_loc;
   }
-
-  int get_override_injection_plane_dir(){return m_override_inj_plane_dir;}
-  amrex::Real get_override_injection_plane_loc(){return m_override_inj_plane_loc;}
 
   void set_start_time(amrex::Real start_time) { m_startTime = start_time; }
   void set_end_time(amrex::Real end_time) { m_endTime = end_time; }
@@ -313,22 +303,28 @@ public:
 
   inline void transform_to_new_cs(amrex::Real vec[AMREX_SPACEDIM])
   {
-	  amrex::Real x,y,z;
-	  if(AMREX_SPACEDIM==2)
-	  {
-		  x=vec[0];
-		  y=vec[1];
-		  vec[0]=m_translation[0]+(m_trans_matrix[0]*x+m_trans_matrix[1]*y);
-		  vec[1]=m_translation[1]+(m_trans_matrix[2]*x+m_trans_matrix[3]*y);
-	  }else if(AMREX_SPACEDIM==3)
-	  	{
-	  		x=vec[0];
-	  		y=vec[1];
-	  		z=vec[2];
-	  		vec[0]=m_translation[0]+(m_trans_matrix[0]*x+m_trans_matrix[1]*y+m_trans_matrix[2]*z);
-	  		vec[1]=m_translation[1]+(m_trans_matrix[3]*x+m_trans_matrix[4]*y+m_trans_matrix[5]*z);
-	  		vec[2]=m_translation[2]+(m_trans_matrix[6]*x+m_trans_matrix[7]*y+m_trans_matrix[8]*z);
-	  	}
+    amrex::Real x, y, z;
+    if (AMREX_SPACEDIM == 2) {
+      x = vec[0];
+      y = vec[1];
+      vec[0] =
+        m_translation[0] + (m_trans_matrix[0] * x + m_trans_matrix[1] * y);
+      vec[1] =
+        m_translation[1] + (m_trans_matrix[2] * x + m_trans_matrix[3] * y);
+    } else if (AMREX_SPACEDIM == 3) {
+      x = vec[0];
+      y = vec[1];
+      z = vec[2];
+      vec[0] =
+        m_translation[0] +
+        (m_trans_matrix[0] * x + m_trans_matrix[1] * y + m_trans_matrix[2] * z);
+      vec[1] =
+        m_translation[1] +
+        (m_trans_matrix[3] * x + m_trans_matrix[4] * y + m_trans_matrix[5] * z);
+      vec[2] =
+        m_translation[2] +
+        (m_trans_matrix[6] * x + m_trans_matrix[7] * y + m_trans_matrix[8] * z);
+    }
   }
   inline amrex::Real interpolateMdot(const amrex::Real time) const
   {
@@ -342,9 +338,12 @@ public:
 
   inline void PrintTransformationMatrix()
   {
-	  amrex::Print()<<"\n Row1 = "<<m_trans_matrix[0]<<" "<<m_trans_matrix[1]<<" "<<m_trans_matrix[2];
-	  amrex::Print()<<"\n Row2 = "<<m_trans_matrix[3]<<" "<<m_trans_matrix[4]<<" "<<m_trans_matrix[5];
-	  amrex::Print()<<"\n Row3 = "<<m_trans_matrix[6]<<" "<<m_trans_matrix[7]<<" "<<m_trans_matrix[8];
+    amrex::Print() << "\n Row1 = " << m_trans_matrix[0] << " "
+                   << m_trans_matrix[1] << " " << m_trans_matrix[2];
+    amrex::Print() << "\n Row2 = " << m_trans_matrix[3] << " "
+                   << m_trans_matrix[4] << " " << m_trans_matrix[5];
+    amrex::Print() << "\n Row3 = " << m_trans_matrix[6] << " "
+                   << m_trans_matrix[7] << " " << m_trans_matrix[8];
   }
 
   amrex::Real m_sumInjMass = -1.;
@@ -357,30 +356,42 @@ public:
   amrex::Real m_totalInjTime = 0.;
 
   bool m_use_Fluentdpmfile;
-  bool m_rstrt_Fltdpmsim_from_nonFltDPMChckPointFile=false;
+  bool m_rstrt_Fltdpmsim_from_nonFltDPMChckPointFile = false;
   std::string m_FluentDPMFile;
-  long int m_dpm_num_of_time_instants=0;
-  bool is_dpm_periodic=true;
+  long int m_dpm_num_of_time_instants = 0;
+  bool is_dpm_periodic = true;
 
-  amrex::Real m_cur_inj_dpm_time=0.0;				//The current DPM time at which injection has occured
-  amrex::Real m_nxt_inj_dpm_time=0.0;				//The next DPM time at which injection is to occur
-  amrex::Real m_cur_inj_flw_time=0.0;				//The current flow time at which injection is to occur
-  amrex::Real m_nxt_inj_flw_time=0.0;				//The next flow time at which injection is to occur
-  amrex::Real dt_dpm=0.0;							//The time between two consecutive injections. Is updated after every injection
-
+  amrex::Real m_cur_inj_dpm_time =
+    0.0; // The current DPM time at which injection has occured
+  amrex::Real m_nxt_inj_dpm_time =
+    0.0; // The next DPM time at which injection is to occur
+  amrex::Real m_cur_inj_flw_time =
+    0.0; // The current flow time at which injection is to occur
+  amrex::Real m_nxt_inj_flw_time =
+    0.0;                    // The next flow time at which injection is to occur
+  amrex::Real dt_dpm = 0.0; // The time between two consecutive injections. Is
+                            // updated after every injection
 
 protected:
   // Member data
-  //Adding the following variables to include dpm injection from external file
-  int m_override_inj_plane_dir=-1;
-  amrex::Real m_override_inj_plane_loc=0.0;
+  // Adding the following variables to include dpm injection from external file
+  int m_override_inj_plane_dir = -1;
+  amrex::Real m_override_inj_plane_loc = 0.0;
 
-  amrex::Real m_dpm_time_initial=0.0;					//The minimum time that appears in the Fluent DPM file.
-  amrex::Real m_dpm_time_final=-1.0;					//The maximum time that appears in the Fluent DPM file.
+  amrex::Real m_dpm_time_initial =
+    0.0; // The minimum time that appears in the Fluent DPM file.
+  amrex::Real m_dpm_time_final =
+    -1.0; // The maximum time that appears in the Fluent DPM file.
 
-  amrex::Real m_dpm_time_initial_injection=0.0;			//The initial DPM time that injection starts for a particular simulation. Is constant for a simulation even after restarts
-  amrex::Real m_flow_time_initial_injection=-1.0;		//The initial Flow time that injection starts for a particular simulation. Is constant for a simulation even after restarts
-  amrex::Real m_flow_time_final_injection=-1.0;		//The initial Flow time that injection starts for a particular simulation. Is constant for a simulation even after restarts
+  amrex::Real m_dpm_time_initial_injection =
+    0.0; // The initial DPM time that injection starts for a particular
+         // simulation. Is constant for a simulation even after restarts
+  amrex::Real m_flow_time_initial_injection =
+    -1.0; // The initial Flow time that injection starts for a particular
+          // simulation. Is constant for a simulation even after restarts
+  amrex::Real m_flow_time_final_injection =
+    -1.0; // The initial Flow time that injection starts for a particular
+          // simulation. Is constant for a simulation even after restarts
 
   std::string m_jetName;
   amrex::RealVect m_norm = amrex::RealVect::TheZeroVector();
@@ -393,8 +404,13 @@ protected:
   amrex::Real m_massFlow = -1.;
   amrex::Real m_jetT = -1.;
   amrex::GpuArray<amrex::Real, SPRAY_FUEL_NUM> m_jetY = {{0.}};
-  amrex::GpuArray<amrex::Real, AMREX_SPACEDIM*AMREX_SPACEDIM> m_trans_matrix = {AMREX_D_DECL(AMREX_D_DECL(1.0,0.0,0.0),AMREX_D_DECL(0.0,1.0,0.0),AMREX_D_DECL(0.0,0.0,1.0))};
-  amrex::GpuArray<amrex::Real, AMREX_SPACEDIM> m_translation = {AMREX_D_DECL(0.0,0.0,0.0)};
+  amrex::GpuArray<amrex::Real, AMREX_SPACEDIM * AMREX_SPACEDIM> m_trans_matrix =
+    {AMREX_D_DECL(
+      AMREX_D_DECL(1.0, 0.0, 0.0),
+      AMREX_D_DECL(0.0, 1.0, 0.0),
+      AMREX_D_DECL(0.0, 0.0, 1.0))};
+  amrex::GpuArray<amrex::Real, AMREX_SPACEDIM> m_translation = {
+    AMREX_D_DECL(0.0, 0.0, 0.0)};
   amrex::Real m_avgDia = -1.;
   std::unique_ptr<DistBase> m_dropDist;
   amrex::Real m_startTime = 0.;
