@@ -404,7 +404,7 @@ protected:
   amrex::Real m_massFlow = -1.;
   amrex::Real m_jetT = -1.;
   amrex::GpuArray<amrex::Real, SPRAY_FUEL_NUM> m_jetY = {{0.}};
-  amrex::GpuArray<amrex::Real, AMREX_SPACEDIM * AMREX_SPACEDIM> m_trans_matrix =
+  amrex::GpuArray<amrex::Real, AMREX_SPACEDIM* AMREX_SPACEDIM> m_trans_matrix =
     {AMREX_D_DECL(
       AMREX_D_DECL(1.0, 0.0, 0.0),
       AMREX_D_DECL(0.0, 1.0, 0.0),
