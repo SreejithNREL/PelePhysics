@@ -51,6 +51,18 @@ SprayJet::SprayJet(const std::string& jet_name, const amrex::Geometry& geom)
   	  ps.query("m_override_inj_plane_loc",m_override_inj_plane_loc);
   	  ps.query("is_dpm_periodic",is_dpm_periodic);
 
+  	  std::vector<amrex::Real> tmatrix(AMREX_SPACEDIM*AMREX_SPACEDIM);
+  	  std::vector<amrex::Real> dX_translation(AMREX_SPACEDIM);
+  	  ps.getarr("trans_matrix", tmatrix);
+  	  ps.getarr("translation", dX_translation);
+  	  for (int dir = 0; dir < AMREX_SPACEDIM*AMREX_SPACEDIM; ++dir) {
+  		m_trans_matrix[dir] = tmatrix[dir];
+  		  }
+
+  	  for (int dir = 0; dir < AMREX_SPACEDIM; ++dir) {
+  		m_translation[dir] = dX_translation[dir];
+  	  		  }
+
   	  ps.query("start_time", m_startTime);
   	  ps.query("end_time", m_endTime);
   	  ps.get("initial_injection_dpm_time",m_dpm_time_initial_injection);

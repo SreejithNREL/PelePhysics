@@ -17,20 +17,6 @@ std::ifstream& GotoLine(std::ifstream& file, long int num){
     return file;
 }
 
-void transform_to_new_cs(amrex::Real vec[3])
-{
-	//To keep it simple, for now I am only transforming coordinates keeping A74 simulations in mind.
-	//TODO write a generic tranformation subroutine
-	amrex::Real x,y,z;
-	x=vec[0];
-	y=vec[1];
-	z=vec[2];
-
-	vec[0]=-z;
-	vec[1]=y;
-	vec[2]=x;
-}
-
 
 void
 SprayParticleContainer::sprayInjectionfromDPMFile(
@@ -52,6 +38,8 @@ SprayParticleContainer::sprayInjectionfromDPMFile(
 
 		SprayUnits SPU;
 		const SprayData* fdat = m_sprayData;
+
+
 
 		while(fabs(time-dt-spray_jet->m_cur_inj_flw_time)<1e-15 || time-dt>=spray_jet->m_cur_inj_flw_time)
 		{
@@ -135,6 +123,7 @@ SprayParticleContainer::sprayInjectionfromDPMFile(
 				int num_ppp=2;										//number of particles per parcel
 				amrex::Real Y_part[SPRAY_FUEL_NUM];					//Spray fuel mass fraction
 				amrex::Real rho_part = 0.;							//density of particle
+				amrex::Real dummy_coordinates[AMREX_SPACEDIM];
 				bool set_part_Y=false;
 
 
@@ -149,14 +138,15 @@ SprayParticleContainer::sprayInjectionfromDPMFile(
 				p.cpu() = amrex::ParallelDescriptor::MyProc();
 
 				//Setting particle properties
-				transform_to_new_cs(part_loc);													//Transforming the particle coordinates to A74 coordinate system
+														//Transforming the particle coordinates to A74 coordinate system
+				spray_jet->transform_to_new_cs(part_loc);
 
 				if(spray_jet->get_override_injection_plane_dir()!=-1)							//Overriding dpm input file particle location on a plane with user specified location
 				{
 					part_loc[spray_jet->get_override_injection_plane_dir()]=spray_jet->get_override_injection_plane_loc();
 				}
 
-				transform_to_new_cs(part_vel);													//Transforming the particle velocity to A74 coordinate system
+				spray_jet->transform_to_new_cs(part_vel);													//Transforming the particle velocity to A74 coordinate system
 				AMREX_D_TERM(	p.rdata(SprayComps::pstateVel) = (part_vel[0]+pmov1);,			//Setting the particle velocities
 								p.rdata(SprayComps::pstateVel + 1) = (part_vel[1]+pmov1);,
 								p.rdata(SprayComps::pstateVel + 2) = (part_vel[2]+pmov1););

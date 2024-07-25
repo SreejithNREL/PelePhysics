@@ -311,6 +311,25 @@ public:
     return val1 + (val2 - val1) * invt;
   }
 
+  inline void transform_to_new_cs(amrex::Real vec[AMREX_SPACEDIM])
+  {
+	  amrex::Real x,y,z;
+	  if(AMREX_SPACEDIM==2)
+	  {
+		  x=vec[0];
+		  y=vec[1];
+		  vec[0]=m_translation[0]+(m_trans_matrix[0]*x+m_trans_matrix[1]*y);
+		  vec[1]=m_translation[1]+(m_trans_matrix[2]*x+m_trans_matrix[3]*y);
+	  }else if(AMREX_SPACEDIM==3)
+	  	{
+	  		x=vec[0];
+	  		y=vec[1];
+	  		z=vec[2];
+	  		vec[0]=m_translation[0]+(m_trans_matrix[0]*x+m_trans_matrix[1]*y+m_trans_matrix[2]*z);
+	  		vec[1]=m_translation[1]+(m_trans_matrix[3]*x+m_trans_matrix[4]*y+m_trans_matrix[5]*z);
+	  		vec[2]=m_translation[2]+(m_trans_matrix[6]*x+m_trans_matrix[7]*y+m_trans_matrix[8]*z);
+	  	}
+  }
   inline amrex::Real interpolateMdot(const amrex::Real time) const
   {
     return interpolateROI(time, inject_mass.dataPtr());
@@ -319,6 +338,13 @@ public:
   inline amrex::Real interpolateVel(const amrex::Real time) const
   {
     return interpolateROI(time, inject_vel.dataPtr());
+  }
+
+  inline void PrintTransformationMatrix()
+  {
+	  amrex::Print()<<"\n Row1 = "<<m_trans_matrix[0]<<" "<<m_trans_matrix[1]<<" "<<m_trans_matrix[2];
+	  amrex::Print()<<"\n Row2 = "<<m_trans_matrix[3]<<" "<<m_trans_matrix[4]<<" "<<m_trans_matrix[5];
+	  amrex::Print()<<"\n Row3 = "<<m_trans_matrix[6]<<" "<<m_trans_matrix[7]<<" "<<m_trans_matrix[8];
   }
 
   amrex::Real m_sumInjMass = -1.;
@@ -367,6 +393,8 @@ protected:
   amrex::Real m_massFlow = -1.;
   amrex::Real m_jetT = -1.;
   amrex::GpuArray<amrex::Real, SPRAY_FUEL_NUM> m_jetY = {{0.}};
+  amrex::GpuArray<amrex::Real, AMREX_SPACEDIM*AMREX_SPACEDIM> m_trans_matrix = {AMREX_D_DECL(AMREX_D_DECL(1.0,0.0,0.0),AMREX_D_DECL(0.0,1.0,0.0),AMREX_D_DECL(0.0,0.0,1.0))};
+  amrex::GpuArray<amrex::Real, AMREX_SPACEDIM> m_translation = {AMREX_D_DECL(0.0,0.0,0.0)};
   amrex::Real m_avgDia = -1.;
   std::unique_ptr<DistBase> m_dropDist;
   amrex::Real m_startTime = 0.;
