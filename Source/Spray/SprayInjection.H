@@ -138,7 +138,8 @@ SprayParticleContainer::sprayInjectionfromDPMFile(
         p.cpu() = amrex::ParallelDescriptor::MyProc();
 
         // Setting particle properties
-        // Transforming the particle coordinates to user-specified coordinate system
+        // Transforming the particle coordinates to user-specified coordinate
+        // system
         spray_jet->transform_to_new_cs(part_loc);
 
         if (
@@ -151,8 +152,8 @@ SprayParticleContainer::sprayInjectionfromDPMFile(
         }
 
         spray_jet->transform_to_new_cs(
-          part_vel); // Transforming the particle velocity to user-specified coordinate
-                     // system
+          part_vel); // Transforming the particle velocity to user-specified
+                     // coordinate system
         AMREX_D_TERM(p.rdata(SprayComps::pstateVel) = (part_vel[0] + pmov1);
                      , // Setting the particle velocities
                      p.rdata(SprayComps::pstateVel + 1) = (part_vel[1] + pmov1);
@@ -521,7 +522,7 @@ SprayParticleContainer::uniformSprayInit(
           nparticles.pop_back();
         }
       } // if (which == MyProc)
-    }   // for (int which ...
+    } // for (int which ...
     for (auto& kv : host_particles) {
       auto grid = kv.first.first;
       auto tile = kv.first.second;
