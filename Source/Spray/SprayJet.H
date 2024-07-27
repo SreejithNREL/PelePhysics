@@ -336,16 +336,6 @@ public:
     return interpolateROI(time, inject_vel.dataPtr());
   }
 
-  inline void PrintTransformationMatrix()
-  {
-    amrex::Print() << "\n Row1 = " << m_trans_matrix[0] << " "
-                   << m_trans_matrix[1] << " " << m_trans_matrix[2];
-    amrex::Print() << "\n Row2 = " << m_trans_matrix[3] << " "
-                   << m_trans_matrix[4] << " " << m_trans_matrix[5];
-    amrex::Print() << "\n Row3 = " << m_trans_matrix[6] << " "
-                   << m_trans_matrix[7] << " " << m_trans_matrix[8];
-  }
-
   amrex::Real m_sumInjMass = -1.;
   amrex::Real m_sumInjTime = -1.;
   // Minimum parcels to inject at a time

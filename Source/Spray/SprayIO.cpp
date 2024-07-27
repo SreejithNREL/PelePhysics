@@ -112,7 +112,6 @@ SprayParticleContainer::SprayParticleIO(
 void
 SprayParticleContainer::PostInitRestart(const std::string& dir)
 {
-
   std::string JetDataFileName = dir + "/particles/injection_data.log";
   if (!m_sprayJets.empty()) {
     int numjets = static_cast<int>(m_sprayJets.size());

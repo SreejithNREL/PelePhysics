@@ -7,8 +7,6 @@
  problem-specific SprayParticlesInitInsert.cpp file, when necessary.
 */
 
-// Added by Sreejith for A74 simulation
-
 std::ifstream&
 GotoLine(std::ifstream& file, long int num)
 {
@@ -140,7 +138,7 @@ SprayParticleContainer::sprayInjectionfromDPMFile(
         p.cpu() = amrex::ParallelDescriptor::MyProc();
 
         // Setting particle properties
-        // Transforming the particle coordinates to A74 coordinate system
+        // Transforming the particle coordinates to user-specified coordinate system
         spray_jet->transform_to_new_cs(part_loc);
 
         if (
@@ -153,7 +151,7 @@ SprayParticleContainer::sprayInjectionfromDPMFile(
         }
 
         spray_jet->transform_to_new_cs(
-          part_vel); // Transforming the particle velocity to A74 coordinate
+          part_vel); // Transforming the particle velocity to user-specified coordinate
                      // system
         AMREX_D_TERM(p.rdata(SprayComps::pstateVel) = (part_vel[0] + pmov1);
                      , // Setting the particle velocities
