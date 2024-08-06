@@ -184,6 +184,7 @@ public:
   }
 
   amrex::Real dpm_final_time() { return m_dpm_time_final; }
+  amrex::Real dpm_intial_time() { return m_dpm_time_initial; }
 
   int get_override_injection_plane_dir() { return m_override_inj_plane_dir; }
   amrex::Real get_override_injection_plane_loc()

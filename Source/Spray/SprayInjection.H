@@ -81,15 +81,18 @@ SprayParticleContainer::sprayInjectionfromDPMFile(
         spray_jet->m_cur_inj_dpm_time ==
           spray_jet->dpm_final_time()) // The last time in the dpm file
       {
+    	  amrex::Print()<<"\n********************************\n Entered the last dpm time \n";
         is_dpm >> lineno_last_dpm_time_end; // includes the last line no
         lineno_current_dpm_time_begin = dummy_line_no;
         lineno_current_dpm_time_end = lineno_last_dpm_time_end;
 
         // if dpm file is periodic, the next time instant is time=0
         if (spray_jet->is_dpm_periodic) {
-          spray_jet->m_nxt_inj_dpm_time = 0.0;
+
+          spray_jet->m_nxt_inj_dpm_time = spray_jet->dpm_intial_time();
           lineno_next_dpm_time_begin = lineno_first_dpm_time_begin;
         } else {
+        	amrex::Print()<<"\nWARNING! No more injection time found in DPM file. To continue the same injection again, set 'is_dpm_periodic' to true.\n ";
           spray_jet->m_nxt_inj_dpm_time = -1.0;
           spray_jet->set_jet_endtime(spray_jet->m_cur_inj_flw_time);
         }
