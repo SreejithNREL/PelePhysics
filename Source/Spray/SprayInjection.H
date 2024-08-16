@@ -25,11 +25,14 @@ SprayParticleContainer::sprayInjectionfromDPMFile(
   const int level)
 {
 
-  if (!spray_jet->jet_active(time) || sim_dt <= 0.) {
+	amrex::Print()<<"\n Calling sprayInjectionfromDPMFile";
+  if (!spray_jet->jet_active(time-sim_dt) || sim_dt <= 0.) {
     amrex::Print() << "Warning! Spray jet " << spray_jet->jet_name()
                    << " is inactive and hence 0 particles are injected.\n";
     return;
   }
+
+
 
   if (amrex::ParallelDescriptor::IOProcessor()) {
     amrex::Real dt = sim_dt;
@@ -52,6 +55,7 @@ SprayParticleContainer::sprayInjectionfromDPMFile(
       amrex::Real part_loc[3];
       amrex::Real part_vel[3];
       amrex::Real dia, temperature, parcel_mass, particle_mass, nppp;
+      const amrex::Real verysmallnum=1.e-15;
 
       long int dummy_line_no;
       std::ifstream is_dpm(spray_jet->m_FluentDPMFile, std::ios::in);
@@ -61,7 +65,7 @@ SprayParticleContainer::sprayInjectionfromDPMFile(
       long int ctr = 0;
 
       // Locate the current injection dpm time in the dpm file
-      while (abs(dummy_time - spray_jet->m_cur_inj_dpm_time) > 1e-9 &&
+      while (abs(dummy_time - spray_jet->m_cur_inj_dpm_time) > verysmallnum &&
              ctr <= spray_jet->m_dpm_num_of_time_instants) {
         if (ctr == 0) {
           is_dpm >> dummy_time >> lineno_first_dpm_time_begin;
@@ -71,11 +75,14 @@ SprayParticleContainer::sprayInjectionfromDPMFile(
         }
         ctr++;
       }
+      //If after one sweep, current injection dpm time is not found
       if (ctr > spray_jet->m_dpm_num_of_time_instants) {
         amrex::Abort(
           "Error! Unable to find the current injection dpm time in file.\n");
       }
 
+      //If at the last dpm time
+      amrex::Print()<<"\nDummy time = "<<dummy_time;
       if (
         dummy_time == spray_jet->m_cur_inj_dpm_time &&
         spray_jet->m_cur_inj_dpm_time ==

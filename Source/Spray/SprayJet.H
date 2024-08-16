@@ -81,6 +81,7 @@ public:
     }
     bool check = true;
     if (time < m_startTime || time > m_endTime) {
+    	amrex::Print()<<"\nSreejith: In ject_active time = "<<time<<" and m_endTime = "<<m_endTime;
       check = false;
     }
     return check;
@@ -104,17 +105,21 @@ public:
 
   void set_initial_injection_dpm_time(amrex::Real time)
   {
+
     m_dpm_time_initial_injection = time;
+    amrex::Print()<<"\nSreejith: In set_initial_injection_dpm_time = "<<m_dpm_time_initial_injection;
   }
 
   void set_final_injection_flow_time()
   {
+	  const amrex::Real largenum = 1e8;
+	  const amrex::Real smallnum = 1e-15;
     if (is_dpm_periodic) {
       m_flow_time_final_injection = 1E8;
     } else {
       m_flow_time_final_injection =
         m_flow_time_initial_injection + m_dpm_time_final;
-      m_endTime = m_flow_time_final_injection;
+      m_endTime = m_flow_time_final_injection+smallnum;
     }
   }
 
