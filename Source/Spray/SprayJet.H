@@ -70,6 +70,7 @@ public:
   // Call this before using spray jet
   bool jet_active(const amrex::Real time) const
   {
+
     if (!m_use_Fluentdpmfile) {
       if (m_jetDia < 0.) {
         amrex::Abort("Jet diameter is not set");
@@ -123,6 +124,7 @@ public:
     }
   }
 
+
   void set_jet_vel(amrex::Real jet_vel) { m_jetVel = jet_vel; }
 
   void set_mass_flow(amrex::Real mass_flow) { m_massFlow = mass_flow; }
@@ -142,7 +144,9 @@ public:
     }
   }
 
+
   void set_jet_endtime(amrex::Real end_time) { m_endTime = end_time; }
+
 
   void set_jet_cent(amrex::RealVect jet_cent, const amrex::Geometry& geom)
   {
@@ -171,6 +175,7 @@ public:
     }
   }
 
+
   void set_override_injection_plane(int dir, amrex::Real loc)
   {
     m_override_inj_plane_dir = dir;
@@ -196,6 +201,7 @@ public:
   {
     return m_override_inj_plane_loc;
   }
+
 
   void set_start_time(amrex::Real start_time) { m_startTime = start_time; }
   void set_end_time(amrex::Real end_time) { m_endTime = end_time; }
@@ -232,7 +238,9 @@ public:
     amrex::Real& T_part,
     amrex::Real* Y_part);
 
+
   virtual bool get_new_particle(amrex::Real* Y_part);
+
 
   /**
      Solve for transformed location and velocity based on provided angles and
@@ -307,6 +315,7 @@ public:
     return val1 + (val2 - val1) * invt;
   }
 
+
   inline void transform_to_new_cs(amrex::Real vec[AMREX_SPACEDIM])
   {
     amrex::Real x, y, z;
@@ -332,6 +341,7 @@ public:
         (m_trans_matrix[6] * x + m_trans_matrix[7] * y + m_trans_matrix[8] * z);
     }
   }
+
   inline amrex::Real interpolateMdot(const amrex::Real time) const
   {
     return interpolateROI(time, inject_mass.dataPtr());
@@ -350,6 +360,7 @@ public:
   // Total injection mass and time
   amrex::Real m_totalInjMass = 0.;
   amrex::Real m_totalInjTime = 0.;
+
 
   bool m_use_Fluentdpmfile;
   bool m_rstrt_Fltdpmsim_from_nonFltDPMChckPointFile = false;
@@ -389,6 +400,7 @@ protected:
     -1.0; // The initial Flow time that injection starts for a particular
           // simulation. Is constant for a simulation even after restarts
 
+
   std::string m_jetName;
   amrex::RealVect m_norm = amrex::RealVect::TheZeroVector();
   amrex::RealVect m_cent = amrex::RealVect::TheZeroVector();
@@ -400,6 +412,7 @@ protected:
   amrex::Real m_massFlow = -1.;
   amrex::Real m_jetT = -1.;
   amrex::GpuArray<amrex::Real, SPRAY_FUEL_NUM> m_jetY = {{0.}};
+
   amrex::GpuArray<amrex::Real, AMREX_SPACEDIM* AMREX_SPACEDIM> m_trans_matrix =
     {AMREX_D_DECL(
       AMREX_D_DECL(1.0, 0.0, 0.0),
@@ -407,6 +420,7 @@ protected:
       AMREX_D_DECL(0.0, 0.0, 1.0))};
   amrex::GpuArray<amrex::Real, AMREX_SPACEDIM> m_translation = {
     AMREX_D_DECL(0.0, 0.0, 0.0)};
+
   amrex::Real m_avgDia = -1.;
   std::unique_ptr<DistBase> m_dropDist;
   amrex::Real m_startTime = 0.;

@@ -220,6 +220,7 @@ SprayJet::SprayJet(
   check_jet_cent(geom);
 }
 
+<<<<<<< HEAD
 bool
 SprayJet::get_new_particle(amrex::Real* Y_part)
 {
@@ -229,6 +230,8 @@ SprayJet::get_new_particle(amrex::Real* Y_part)
   return true;
 }
 
+=======
+>>>>>>> development
 // Default get_new_particle
 bool
 SprayJet::get_new_particle(
