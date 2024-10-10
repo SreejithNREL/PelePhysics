@@ -47,7 +47,7 @@ private:
   // Interpolation data
   InterpType m_interpType;
   amrex::Array3D<amrex::Real, 0, 1, 0, 1, 0, 1> cell_data{0.0};
-  amrex::Vector<amrex::Real> m_values_at_probe;
+  amrex::Vector<amrex::Real> m_values_at_probe{0.0};
 
   //Probe file name
   std::ofstream tmpProbeFile;

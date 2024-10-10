@@ -181,7 +181,6 @@ DiagProbe::prepare(
 		 amrex::Abort("\nUnable to find the probe location. There seems to be something wrong");
 	 }
 
-
 	 //We are storing only the single box which contains the probe
 	 m_probebox.resize(1);
 	 m_probeboxDM.resize(1);
@@ -214,6 +213,7 @@ void DiagProbe::processDiag(
 	//Is there a way to isolate the state array given a box? I am not sure about this. So I am iterating using an MFI (useless operation) to find the box
 	for (amrex::MFIter mfi(planeData[0], amrex::TilingIfNotGPU()); mfi.isValid(); ++mfi)
 	{
+		  amrex::AllPrint()<<"\n Inside mfiter";
 	      const auto& bx = mfi.tilebox();
 	      const int state_idx = m_dmConvert[0][mfi.index()];
 	      auto const& state = a_state[m_finest_level_probe]->const_array(state_idx, 0);
@@ -237,7 +237,7 @@ void DiagProbe::processDiag(
 	    		  cell_data(0,1,0) = state(m_probe_idx[0],    m_probe_idx[1]+1, 0, stIdx);
 	    		  cell_data(1,1,0) = state(m_probe_idx[0]+1,m_probe_idx[1]+1, 0, stIdx);
 
-	    		  amrex::Print()<<"\n Cell center values = "<< cell_data(0,0,0)<<" "<< cell_data(1,0,0)<<" "<< cell_data(0,1,0)<<" "<< cell_data(1,1,0);
+	    		  amrex::AllPrint()<<"\n Cell center values = "<< cell_data(0,0,0)<<" "<< cell_data(1,0,0)<<" "<< cell_data(0,1,0)<<" "<< cell_data(1,1,0);
 	    	  }
 #else
 	    	  {
@@ -266,18 +266,25 @@ void DiagProbe::processDiag(
 #endif
 	    	  }
 
+
 	      }
 	}
 
+
+	amrex::ParallelDescriptor::ReduceRealSum( m_values_at_probe.data(), static_cast<int>(m_values_at_probe.size()));
+
+
 	//Write probe values to files
 
+	if (amrex::ParallelDescriptor::IOProcessor()) {
 	 tmpProbeFile <<a_time<<","<<a_nstep;
 	  for (int f{0}; f < m_values_at_probe.size(); ++f) {
 
 	  	    	 tmpProbeFile << ","<<m_values_at_probe[f];
+	  	    	 amrex::AllPrint()<<"\n"<<m_values_at_probe[f];
 	  	     }
 	  tmpProbeFile << "\n";
-	  tmpProbeFile.flush();
+	  tmpProbeFile.flush();}
 
 
 }
