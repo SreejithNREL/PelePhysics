@@ -9,7 +9,7 @@ class DiagProbe : public DiagBase::Register<DiagProbe>
 public:
   static std::string identifier() { return "DiagProbe"; }
 
-  enum InterpType { CellCenter, Linear};
+  enum InterpType { CellCenter, Linear };
 
   void init(const std::string& a_prefix, std::string_view a_diagName) override;
 
@@ -36,7 +36,6 @@ private:
   int m_nfiles_probe;
   int m_finest_level_probe;
   int m_box_probe_num;
-  amrex::Box m_box_probe;
   int m_probe_idx[AMREX_SPACEDIM];
 
   // Probe definition
@@ -49,12 +48,11 @@ private:
   amrex::Array3D<amrex::Real, 0, 1, 0, 1, 0, 1> cell_data{0.0};
   amrex::Vector<amrex::Real> m_values_at_probe{0.0};
 
-  //Probe file name
+  // Probe file name
   std::ofstream tmpProbeFile;
   std::string tmpProbeFileName;
 
   // 2D-plane boxArray vector
-  amrex::Geometry m_geomLev0;
   amrex::Vector<amrex::BoxArray> m_probebox;
   amrex::Vector<amrex::Vector<int>> m_dmConvert;
   amrex::Vector<amrex::DistributionMapping> m_probeboxDM;
