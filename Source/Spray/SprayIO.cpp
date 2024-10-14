@@ -142,18 +142,14 @@ SprayParticleContainer::PostInitRestart(const std::string& dir)
       Vector<Real> in_min_parcel(in_numjets);
       Vector<Real> in_total_mass(in_numjets);
       Vector<Real> in_total_time(in_numjets);
-<<<<<<< HEAD
       Vector<Real> fluentdpm_inj_init_flw_time(in_numjets);
       Vector<Real> fluentdpm_inj_init_dpm_time(in_numjets);
       Vector<Real> fluentdpm_inj_nxt_flw_time(in_numjets);
       Vector<Real> fluentdpm_inj_nxt_dpm_time(in_numjets);
-=======
->>>>>>> development
       for (int i = 0; i < in_numjets; ++i) {
         JetDataFile >> in_jet_names[i] >> in_inj_ppp[i] >> in_inj_mass[i] >>
           in_inj_time[i] >> in_min_parcel[i] >> in_total_mass[i] >>
           in_total_time[i];
-<<<<<<< HEAD
         std::string in_name = in_jet_names[i];
 
         bool jet_is_fluent_dpm_based = false;
@@ -175,8 +171,6 @@ SprayParticleContainer::PostInitRestart(const std::string& dir)
             break;
           }
         }
-=======
->>>>>>> development
       }
       for (int ijets = 0; ijets < in_numjets; ++ijets) {
         std::string in_name = in_jet_names[ijets];
@@ -189,7 +183,6 @@ SprayParticleContainer::PostInitRestart(const std::string& dir)
             js->m_minParcel = in_min_parcel[ijets];
             js->m_totalInjMass = in_total_mass[ijets];
             js->m_totalInjTime = in_total_time[ijets];
-<<<<<<< HEAD
 
             if (
               js->m_use_Fluentdpmfile &&
@@ -207,8 +200,6 @@ SprayParticleContainer::PostInitRestart(const std::string& dir)
                 << " and next injection dpm time = " << js->m_cur_inj_dpm_time
                 << "\n";
             }
-=======
->>>>>>> development
           }
         }
       }

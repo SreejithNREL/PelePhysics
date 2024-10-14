@@ -51,7 +51,6 @@ public:
     amrex::Vector<amrex::MultiFab> const& robin_b,
     amrex::Vector<amrex::MultiFab> const& robin_f)
     : mlmgpp_(std::move(mlmgpp)),
-
       geom_(geom),
       grids_(grids),
       dmap_(dmap),

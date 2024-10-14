@@ -53,6 +53,7 @@ public:
   inline const amrex::Real& jet_dia() const { return m_jetDia; }
   inline const amrex::Real& spread_angle() const { return m_spreadAngle; }
   inline amrex::Real mass_flow_rate(const amrex::Real time) const
+
   {
     if (m_useROI) {
       return interpolateMdot(time);
@@ -89,6 +90,7 @@ public:
   }
 
   inline bool hollow_spray() const { return m_hollowSpray; }
+
 
   /// Returns the average values given for the jet
   amrex::Real get_avg_dia() const { return m_avgDia; }
@@ -299,7 +301,7 @@ public:
     part_vel *= umag;
   }
 
-  inline amrex::Real
+  amrex::Real
   interpolateROI(const amrex::Real& time, const amrex::Real* vals) const
   {
     int i = 0;
@@ -342,12 +344,13 @@ public:
     }
   }
 
-  inline amrex::Real interpolateMdot(const amrex::Real time) const
+
+  amrex::Real interpolateMdot(const amrex::Real time) const
   {
     return interpolateROI(time, inject_mass.dataPtr());
   }
 
-  inline amrex::Real interpolateVel(const amrex::Real time) const
+  amrex::Real interpolateVel(const amrex::Real time) const
   {
     return interpolateROI(time, inject_vel.dataPtr());
   }

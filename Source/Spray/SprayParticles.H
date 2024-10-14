@@ -112,7 +112,8 @@ public:
   amrex::Real estTimestep(int level) const;
 
   /// \brief Reset the particle ID in case we need to reinitialize the particles
-  static inline void resetID(const int id) { ParticleType::NextID(id); }
+
+  static void resetID(const int id) { ParticleType::NextID(id); }
 
   /// \brief Returns the number of ghost cells for making ghost particles. This
   /// is called on level N-1 to make ghost particles on level N from valid
@@ -123,7 +124,8 @@ public:
   /// @param cfl Particle CFL number on level N
   /// @param depos_width Number of cells adjacent to the cell containing the
   /// particle needed to interpolate the particle source term to the mesh
-  static inline int getGhostPartCells(
+
+  static int getGhostPartCells(
     const int level,
     const int finest_level,
     const int amr_ncycle,
@@ -149,7 +151,7 @@ public:
   /// is 1 for trilinear interpolation
   /// @param depos_width Number of cells adjacent to the cell containing the
   /// particle needed to interpolate the particle source term to the mesh
-  static inline int getStateGhostCells(
+  static int getStateGhostCells(
     const int level,
     const int finest_level,
     const int amr_ncycle,
@@ -176,7 +178,7 @@ public:
   /// @param cfl Particle CFL number on level N
   /// @param depos_width Number of cells adjacent to the cell containing the
   /// particle needed to interpolate the particle source term to the mesh
-  static inline int getSourceGhostCells(
+  static int getSourceGhostCells(
     const int level,
     const int finest_level,
     const int amr_ncycle,
@@ -249,7 +251,7 @@ public:
   /// @param level Current AMR level
   /// @param tmpSource MultiFab containing the temporary spray source data
   /// @param actSource MultiFab where final source data should end up
-  inline void transferSource(
+  void transferSource(
     const int& source_ghosts,
     const int& level,
     amrex::MultiFab& tmpSource,
