@@ -33,7 +33,7 @@ private:
   // Variables output
   amrex::Vector<std::string> m_fieldNames;
   amrex::Gpu::DeviceVector<int> m_fieldIndices_d;
-  int m_nfiles_probe;
+
   int m_finest_level_probe;
   int m_box_probe_num;
   int m_probe_idx[AMREX_SPACEDIM];

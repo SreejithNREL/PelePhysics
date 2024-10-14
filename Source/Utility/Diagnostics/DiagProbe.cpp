@@ -64,9 +64,6 @@ DiagProbe::init(const std::string& a_prefix, std::string_view a_diagName)
     pp.get("field_names", m_fieldNames[f], f);
     m_values_at_probe[f] = 0.0;
   }
-  m_nfiles_probe =
-    std::max(1, std::min(amrex::ParallelDescriptor::NProcs(), 256));
-  pp.query("n_files", m_nfiles_probe);
 
   // Plane center
 
