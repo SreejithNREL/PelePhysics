@@ -62,6 +62,7 @@ DiagProbe::init(const std::string& a_prefix, std::string_view a_diagName)
   m_fieldIndices_d.resize(nOutFields);
   for (int f{0}; f < nOutFields; ++f) {
     pp.get("field_names", m_fieldNames[f], f);
+    m_values_at_probe[f] = 0.0;
   }
   m_nfiles_probe =
     std::max(1, std::min(amrex::ParallelDescriptor::NProcs(), 256));
@@ -128,6 +129,8 @@ DiagProbe::prepare(
     amrex::Abort("\nProbe " + m_diagfile + " lies outside problem domain");
   }
 
+  // If first time (including restart), write the file header. Fill
+  // m_fieldIndices_d vector
   if (first_time) {
     int nOutFields = static_cast<int>(m_fieldIndices_d.size());
     tmpProbeFile << "time,iter";
@@ -139,15 +142,15 @@ DiagProbe::prepare(
     first_time = false;
   }
 
-  // Search for highest lev and box where probe is located.
+  // Search for highest lev and location of the probe in index space.
   bool probe_found = false;
 
   for (int lev = a_nlevels - 1; lev >= 0; lev--) {
     const amrex::Real* dx = a_geoms[lev].CellSize();
     const amrex::Real* problo = a_geoms[lev].ProbLo();
-
     amrex::Real dist[AMREX_SPACEDIM];
 
+    // Calculate distance of probe from the domain low values
     for (int idim = 0; idim < AMREX_SPACEDIM; idim++) {
       dist[idim] = (m_probe_loc[idim] - (problo[idim])) / dx[idim];
     }
@@ -176,7 +179,7 @@ DiagProbe::prepare(
     }
   }
 
-  // What if the probe is in an EB?
+  // What if the probe is in an EB? Just throw an error for now
   if (!probe_found) {
     amrex::Abort(
       "\nUnable to find the probe location. There seems to be something wrong");
@@ -211,6 +214,8 @@ DiagProbe::processDiag(
   amrex::Vector<amrex::MultiFab> planeData(1);
   planeData[0].define(
     m_probebox[0], m_probeboxDM[0], static_cast<int>(m_fieldNames.size()), 0);
+
+  std::fill(m_values_at_probe.begin(), m_values_at_probe.end(), 0.0);
 
   // Is there a way to isolate the state array given a box? I am not sure about
   // this. So I am iterating using an MFI (useless operation) to find the box
@@ -277,6 +282,9 @@ DiagProbe::processDiag(
     }
   }
 
+  amrex::AllPrint() << "\n values at probe before real sum = "
+                    << m_values_at_probe[0];
+
   amrex::ParallelDescriptor::ReduceRealSum(
     m_values_at_probe.data(), static_cast<int>(m_values_at_probe.size()));
 
@@ -284,7 +292,6 @@ DiagProbe::processDiag(
   if (amrex::ParallelDescriptor::IOProcessor()) {
     tmpProbeFile << a_time << "," << a_nstep;
     for (int f{0}; f < m_values_at_probe.size(); ++f) {
-
       tmpProbeFile << "," << m_values_at_probe[f];
     }
     tmpProbeFile << "\n";
