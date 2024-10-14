@@ -279,9 +279,6 @@ DiagProbe::processDiag(
     }
   }
 
-  amrex::AllPrint() << "\n values at probe before real sum = "
-                    << m_values_at_probe[0];
-
   amrex::ParallelDescriptor::ReduceRealSum(
     m_values_at_probe.data(), static_cast<int>(m_values_at_probe.size()));
 
