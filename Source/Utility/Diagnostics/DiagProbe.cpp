@@ -48,16 +48,32 @@ DiagProbe::init(const std::string& a_prefix, std::string_view a_diagName)
 {
   DiagBase::init(a_prefix, a_diagName);
 
+#ifdef AMREX_USE_EB
+  amrex::Abort("\nProbe implementation not yet done for EBs!\n");
+#endif
+
   if (m_filters.empty()) {
     amrex::Print() << " Filters are not available on DiagFrameProbe and will "
                       "be discarded \n";
   }
   amrex::ParmParse pp(a_prefix);
-  // Outputted variables
+
+  //Read probe location
+  amrex::Vector<amrex::Real> probe_loc;
+  pp.getarr("probe_location", probe_loc, 0, pp.countval("probe_location"));
+  if (probe_loc.size() >= AMREX_SPACEDIM) {
+	  for (int idim = 0; idim < AMREX_SPACEDIM; idim++) {
+		  m_probe_loc[idim] = probe_loc[idim];
+	  }
+  } else {
+      amrex::Abort("\nProvide probe location array with same dimension as "
+                   "problem dimension");
+    }
+
+  // Read field names and initialize probe variables to zero
   int nOutFields = pp.countval("field_names");
   AMREX_ASSERT(nOutFields > 0);
   m_values_at_probe.resize(nOutFields);
-
   m_fieldNames.resize(nOutFields);
   m_fieldIndices_d.resize(nOutFields);
   for (int f{0}; f < nOutFields; ++f) {
@@ -65,20 +81,7 @@ DiagProbe::init(const std::string& a_prefix, std::string_view a_diagName)
     m_values_at_probe[f] = 0.0;
   }
 
-  // Plane center
-
-  amrex::Vector<amrex::Real> probe_loc;
-  pp.getarr("probe_location", probe_loc, 0, pp.countval("probe_location"));
-  if (probe_loc.size() >= AMREX_SPACEDIM) {
-    for (int idim = 0; idim < AMREX_SPACEDIM; idim++) {
-      m_probe_loc[idim] = probe_loc[idim];
-    }
-  } else {
-    amrex::Abort("\nProvide probe location array with same dimension as "
-                 "problem dimension");
-  }
-
-  // Interpolation
+  // Read interpolation type. Check interpolation type values
   std::string intType = "CellCenter";
   pp.query("interpolation", intType);
   if (intType == "Linear") {
@@ -92,6 +95,7 @@ DiagProbe::init(const std::string& a_prefix, std::string_view a_diagName)
   }
 
   // Set output file properties
+  // Output files to temporals directory (hardcoded)
   amrex::UtilCreateDirectory("temporals", 0755);
   std::string tmpProbeFileName =
     "temporals/Probe_" + std::string(a_diagName) + ".out";
@@ -136,10 +140,11 @@ DiagProbe::prepare(
       tmpProbeFile << "," << m_fieldNames[f];
     }
     tmpProbeFile << "\n";
+    tmpProbeFile.flush();
     first_time = false;
   }
 
-  // Search for highest lev and location of the probe in index space.
+  // Search for finest level and location of the probe in index space.
   bool probe_found = false;
 
   for (int lev = a_nlevels - 1; lev >= 0; lev--) {
@@ -161,11 +166,12 @@ DiagProbe::prepare(
     for (int i = 0; i < a_grids[lev].size(); i++) {
       auto cBox = a_grids[lev][i];
       if (cBox.contains(idx_lev) && !probe_found) {
-        // box found. store the lev, box number and box reference. set
+        // box found. store the level and  box number. set
         // probe_found to true to stop searching any further
         m_finest_level_probe = lev;
         m_box_probe_num = i;
         for (int idim = 0; idim < AMREX_SPACEDIM; idim++) {
+          //Store grid size, cell corner and probe index
           dx_finest_lev_probe[idim] = dx[idim];
           m_probe_idx[idim] = idx_lev[idim];
           x_low_cell[idim] =
@@ -176,7 +182,7 @@ DiagProbe::prepare(
     }
   }
 
-  // What if the probe is in an EB? Just throw an error for now
+  // What is the probe is still not found? I am not sure such a scenario might exist
   if (!probe_found) {
     amrex::Abort(
       "\nUnable to find the probe location. There seems to be something wrong");
