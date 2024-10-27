@@ -31,31 +31,44 @@ public:
 
 private:
   // Variables output
-  amrex::Vector<std::string> m_fieldNames;													//variable names to be interpolated, as given by the user
-  amrex::Gpu::DeviceVector<int> m_fieldIndices_d;										//variables to be interpolated, as given by the user
+  amrex::Vector<std::string>
+    m_fieldNames; // variable names to be interpolated, as given by the user
+  amrex::Gpu::DeviceVector<int>
+    m_fieldIndices_d; // variables to be interpolated, as given by the user
 
-  int m_finest_level_probe;																				//Finest level at which probe is located
-  int m_box_probe_num;																				//The box number at lev=m_finest_level_probe in which the probe is located
-  int m_probe_idx[AMREX_SPACEDIM];															//The cell index of the cell in which probe is located
+  int m_finest_level_probe; // Finest level at which probe is located
+  int m_box_probe_num; // The box number at lev=m_finest_level_probe in which
+                       // the probe is located
+  int m_probe_idx[AMREX_SPACEDIM]; // The cell index of the cell in which probe
+                                   // is located
 
   // Probe definition
-  amrex::GpuArray<amrex::Real, AMREX_SPACEDIM> m_probe_loc;					//probe location given by the user
-  amrex::GpuArray<amrex::Real, AMREX_SPACEDIM> dx_finest_lev_probe;		//grid size at lev=m_finest_level_probe
-  amrex::GpuArray<amrex::Real, AMREX_SPACEDIM> x_low_cell;						//lowerst corner of the cell in which probe is located
+  amrex::GpuArray<amrex::Real, AMREX_SPACEDIM>
+    m_probe_loc; // probe location given by the user
+  amrex::GpuArray<amrex::Real, AMREX_SPACEDIM>
+    dx_finest_lev_probe; // grid size at lev=m_finest_level_probe
+  amrex::GpuArray<amrex::Real, AMREX_SPACEDIM>
+    x_low_cell; // lowerst corner of the cell in which probe is located
 
   // Interpolation data
-  InterpType m_interpType;																				//Interpolation type ("CellCenter" or "Linear" only)
-  amrex::Array3D<amrex::Real, 0, 1, 0, 1, 0, 1> cell_data{0.0};						//Neighbour cell solution values
-  amrex::Vector<amrex::Real> m_values_at_probe{0.0};								//Vector of interpolated solution values at probe location that is written to output file
+  InterpType m_interpType; // Interpolation type ("CellCenter" or "Linear" only)
+  amrex::Array3D<amrex::Real, 0, 1, 0, 1, 0, 1> cell_data{
+    0.0}; // Neighbour cell solution values
+  amrex::Vector<amrex::Real> m_values_at_probe{
+    0.0}; // Vector of interpolated solution values at probe location that is
+          // written to output file
 
   // Probe file name
-  std::ofstream tmpProbeFile;																			//Ofstream object for writing probe file data
-  std::string tmpProbeFileName;																		//File name in which probe data is written. Hard coded to be stored in "./temporal/Probe_<probename>.out"
+  std::ofstream tmpProbeFile; // Ofstream object for writing probe file data
+  std::string
+    tmpProbeFileName; // File name in which probe data is written. Hard coded to
+                      // be stored in "./temporal/Probe_<probename>.out"
 
   // 2D-plane boxArray vector
-  amrex::Vector<amrex::BoxArray> m_probebox;											//probe box array (single box)
-  amrex::Vector<amrex::Vector<int>> m_dmConvert;										//Distribution mapping
-  amrex::Vector<amrex::DistributionMapping> m_probeboxDM;						//Distribution mapping
+  amrex::Vector<amrex::BoxArray> m_probebox;     // probe box array (single box)
+  amrex::Vector<amrex::Vector<int>> m_dmConvert; // Distribution mapping
+  amrex::Vector<amrex::DistributionMapping> m_probeboxDM; // Distribution
+                                                          // mapping
 };
 
 #endif

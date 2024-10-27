@@ -58,17 +58,17 @@ DiagProbe::init(const std::string& a_prefix, std::string_view a_diagName)
   }
   amrex::ParmParse pp(a_prefix);
 
-  //Read probe location
+  // Read probe location
   amrex::Vector<amrex::Real> probe_loc;
   pp.getarr("probe_location", probe_loc, 0, pp.countval("probe_location"));
   if (probe_loc.size() >= AMREX_SPACEDIM) {
-	  for (int idim = 0; idim < AMREX_SPACEDIM; idim++) {
-		  m_probe_loc[idim] = probe_loc[idim];
-	  }
-  } else {
-      amrex::Abort("\nProvide probe location array with same dimension as "
-                   "problem dimension");
+    for (int idim = 0; idim < AMREX_SPACEDIM; idim++) {
+      m_probe_loc[idim] = probe_loc[idim];
     }
+  } else {
+    amrex::Abort("\nProvide probe location array with same dimension as "
+                 "problem dimension");
+  }
 
   // Read field names and initialize probe variables to zero
   int nOutFields = pp.countval("field_names");
@@ -171,7 +171,7 @@ DiagProbe::prepare(
         m_finest_level_probe = lev;
         m_box_probe_num = i;
         for (int idim = 0; idim < AMREX_SPACEDIM; idim++) {
-          //Store grid size, cell corner and probe index
+          // Store grid size, cell corner and probe index
           dx_finest_lev_probe[idim] = dx[idim];
           m_probe_idx[idim] = idx_lev[idim];
           x_low_cell[idim] =
@@ -182,7 +182,8 @@ DiagProbe::prepare(
     }
   }
 
-  // What is the probe is still not found? I am not sure such a scenario might exist
+  // What is the probe is still not found? I am not sure such a scenario might
+  // exist
   if (!probe_found) {
     amrex::Abort(
       "\nUnable to find the probe location. There seems to be something wrong");
