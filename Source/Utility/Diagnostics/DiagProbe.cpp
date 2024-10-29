@@ -236,59 +236,66 @@ DiagProbe::processDiag(
       a_state[m_finest_level_probe]->const_array(state_idx, 0);
     auto* idx_d_p = m_fieldIndices_d.dataPtr();
     int nitems =m_fieldIndices_d.size();
+    //auto cell_data_d = cell_data;
+    auto &m_interpType_d = m_interpType;
+    auto &m_probe_loc_d = m_probe_loc;
+    auto &m_probe_idx_d = m_probe_idx;
+    auto &x_low_cell_d = x_low_cell;
+    auto &dx_finest_lev_probe_d = dx_finest_lev_probe;
 
     //for (int n{0}; n < m_fieldIndices_d.size(); n++) {
-    amrex::ParallelFor(nitems,[m_interpType,cell_data,m_probe_loc,x_low_cell] AMREX_GPU_DEVICE (int nindex){
+    amrex::ParallelFor(nitems,[=] AMREX_GPU_DEVICE (int nindex){
+    	amrex::Array3D<amrex::Real, 0, 1, 0, 1, 0, 1> cell_data_d{0.0}; // Neighbour cell solution values
     	int stIdx = idx_d_p[nindex];
-      if (m_interpType == Linear) {
+      if (m_interpType_d == Linear) {
 
 #if (AMREX_SPACEDIM == 1)
         {
-          cell_data(0, 0, 0) = state(m_probe_idx[0], 0, 0, stIdx);
-          cell_data(1, 0, 0) = state(m_probe_idx[0] + 1, 0, 0, stIdx);
+        	cell_data_d(0, 0, 0) = state(m_probe_idx_d[0], 0, 0, stIdx);
+        	cell_data_d(1, 0, 0) = state(m_probe_idx_d[0] + 1, 0, 0, stIdx);
         }
 #elif (AMREX_SPACEDIM == 2)
         {
-          cell_data(0, 0, 0) = state(m_probe_idx[0], m_probe_idx[1], 0, stIdx);
-          cell_data(1, 0, 0) =
-            state(m_probe_idx[0] + 1, m_probe_idx[1], 0, stIdx);
-          cell_data(0, 1, 0) =
-            state(m_probe_idx[0], m_probe_idx[1] + 1, 0, stIdx);
-          cell_data(1, 1, 0) =
-            state(m_probe_idx[0] + 1, m_probe_idx[1] + 1, 0, stIdx);
+        	cell_data_d(0, 0, 0) = state(m_probe_idx_d[0], m_probe_idx_d[1], 0, stIdx);
+        	cell_data_d(1, 0, 0) =
+            state(m_probe_idx_d[0] + 1, m_probe_idx_d[1], 0, stIdx);
+        	cell_data_d(0, 1, 0) =
+            state(m_probe_idx_d[0], m_probe_idx_d[1] + 1, 0, stIdx);
+        	cell_data_d(1, 1, 0) =
+            state(m_probe_idx_d[0] + 1, m_probe_idx_d[1] + 1, 0, stIdx);
         }
 #else
         {
-          cell_data(0, 0, 0) =
-            state(m_probe_idx[0], m_probe_idx[1], m_probe_idx[2], stIdx);
-          cell_data(1, 0, 0) =
-            state(m_probe_idx[0] + 1, m_probe_idx[1], m_probe_idx[2], stIdx);
-          cell_data(0, 1, 0) =
-            state(m_probe_idx[0], m_probe_idx[1] + 1, m_probe_idx[2], stIdx);
-          cell_data(1, 1, 0) = state(
-            m_probe_idx[0] + 1, m_probe_idx[1] + 1, m_probe_idx[2], stIdx);
+        	cell_data_d(0, 0, 0) =
+            state(m_probe_idx_d[0], m_probe_idx_d[1], m_probe_idx_d[2], stIdx);
+        	cell_data_d(1, 0, 0) =
+            state(m_probe_idx_d[0] + 1, m_probe_idx_d[1], m_probe_idx_d[2], stIdx);
+        	cell_data_d(0, 1, 0) =
+            state(m_probe_idx_d[0], m_probe_idx_d[1] + 1, m_probe_idx_d[2], stIdx);
+        	cell_data_d(1, 1, 0) = state(
+        			m_probe_idx_d[0] + 1, m_probe_idx_d[1] + 1, m_probe_idx_d[2], stIdx);
 
-          cell_data(0, 0, 1) =
-            state(m_probe_idx[0], m_probe_idx[1], m_probe_idx[2] + 1, stIdx);
-          cell_data(1, 0, 1) = state(
-            m_probe_idx[0] + 1, m_probe_idx[1], m_probe_idx[2] + 1, stIdx);
-          cell_data(0, 1, 1) = state(
-            m_probe_idx[0], m_probe_idx[1] + 1, m_probe_idx[2] + 1, stIdx);
-          cell_data(1, 1, 1) = state(
-            m_probe_idx[0] + 1, m_probe_idx[1] + 1, m_probe_idx[2] + 1, stIdx);
+        	cell_data_d(0, 0, 1) =
+            state(m_probe_idx_d[0], m_probe_idx_d[1], m_probe_idx_d[2] + 1, stIdx);
+        	cell_data_d(1, 0, 1) = state(
+        			m_probe_idx_d[0] + 1, m_probe_idx_d[1], m_probe_idx_d[2] + 1, stIdx);
+        	cell_data_d(0, 1, 1) = state(
+        			m_probe_idx_d[0], m_probe_idx_d[1] + 1, m_probe_idx_d[2] + 1, stIdx);
+        	cell_data_d(1, 1, 1) = state(
+        			m_probe_idx_d[0] + 1, m_probe_idx_d[1] + 1, m_probe_idx_d[2] + 1, stIdx);
         }
 #endif
         amrex::Real interpolatedval = LinearInterpolate(
-          m_probe_loc, x_low_cell, cell_data, dx_finest_lev_probe);
+          m_probe_loc_d, x_low_cell_d, cell_data_d, dx_finest_lev_probe);
         m_values_at_probe[nindex] = interpolatedval;
-      } else if (m_interpType == CellCenter) {
+      } else if (m_interpType_d == CellCenter) {
 #if (AMREX_SPACEDIM == 1)
-        m_values_at_probe[nindex] = state(m_probe_idx[0], 0, 0, stIdx);
+        m_values_at_probe[nindex] = state(m_probe_idx_d[0], 0, 0, stIdx);
 #elif (AMREX_SPACEDIM == 2)
-        m_values_at_probe[nindex] = state(m_probe_idx[0], m_probe_idx[1], 0, stIdx);
+        m_values_at_probe[nindex] = state(m_probe_idx_d[0], m_probe_idx_d[1], 0, stIdx);
 #else
         m_values_at_probe[nindex] =
-          state(m_probe_idx[0], m_probe_idx[1], m_probe_idx[2], stIdx);
+          state(m_probe_idx_d[0], m_probe_idx_d[1], m_probe_idx_d[2], stIdx);
 #endif
       }
     });
