@@ -236,8 +236,9 @@ DiagProbe::processDiag(
       a_state[m_finest_level_probe]->const_array(state_idx, 0);
     auto* idx_d_p = m_fieldIndices_d.dataPtr();
     int nitems =m_fieldIndices_d.size();
+
     //for (int n{0}; n < m_fieldIndices_d.size(); n++) {
-    amrex::ParallelFor(nitems,[=] AMREX_GPU_DEVICE (int nindex){
+    amrex::ParallelFor(nitems,[m_interpType,cell_data,m_probe_loc,x_low_cell] AMREX_GPU_DEVICE (int nindex){
     	int stIdx = idx_d_p[nindex];
       if (m_interpType == Linear) {
 
