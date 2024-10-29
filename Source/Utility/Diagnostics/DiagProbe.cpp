@@ -228,26 +228,17 @@ DiagProbe::processDiag(
   // Is there a way to isolate the state array given a box? I am not sure about
   // this. So I am iterating using an MFI (useless operation) to find the box
 
-  int nOutFields = static_cast<int>(m_fieldIndices_d.size());
-        amrex::Vector<int> m_fieldIndices(nOutFields, 0);
-        for (int f{0}; f < nOutFields; ++f) {
-          m_fieldIndices[f] = getFieldIndex(m_fieldNames[f], a_varNames);
-        }
-        amrex::Gpu::copy(
-          amrex::Gpu::hostToDevice, m_fieldIndices.begin(), m_fieldIndices.end(),
-          m_fieldIndices_d.begin());
-
-  for (amrex::MFIter mfi(planeData[0], amrex::TilingIfNotGPU()); mfi.isValid();
+   for (amrex::MFIter mfi(planeData[0], amrex::TilingIfNotGPU()); mfi.isValid();
        ++mfi) {
     const auto& bx = mfi.tilebox();
     const int state_idx = m_dmConvert[0][mfi.index()];
     auto const& state =
       a_state[m_finest_level_probe]->const_array(state_idx, 0);
     auto* idx_d_p = m_fieldIndices_d.dataPtr();
+    int nitems =m_fieldIndices_d.size();
     //for (int n{0}; n < m_fieldIndices_d.size(); n++) {
-    amrex::ParallelFor(bx,m_fieldNames.size(), [=] AMREX_GPU_DEVICE(int i,int j,int k,int n) noexcept {
-
-      int stIdx = idx_d_p[n];
+    amrex::ParallelFor(nitems,[=] AMREX_GPU_DEVICE (int nindex){
+    	int stIdx = idx_d_p[nindex];
       if (m_interpType == Linear) {
 
 #if (AMREX_SPACEDIM == 1)
@@ -288,14 +279,14 @@ DiagProbe::processDiag(
 #endif
         amrex::Real interpolatedval = LinearInterpolate(
           m_probe_loc, x_low_cell, cell_data, dx_finest_lev_probe);
-        m_values_at_probe[n] = interpolatedval;
+        m_values_at_probe[nindex] = interpolatedval;
       } else if (m_interpType == CellCenter) {
 #if (AMREX_SPACEDIM == 1)
-        m_values_at_probe[n] = state(m_probe_idx[0], 0, 0, stIdx);
+        m_values_at_probe[nindex] = state(m_probe_idx[0], 0, 0, stIdx);
 #elif (AMREX_SPACEDIM == 2)
-        m_values_at_probe[n] = state(m_probe_idx[0], m_probe_idx[1], 0, stIdx);
+        m_values_at_probe[nindex] = state(m_probe_idx[0], m_probe_idx[1], 0, stIdx);
 #else
-        m_values_at_probe[n] =
+        m_values_at_probe[nindex] =
           state(m_probe_idx[0], m_probe_idx[1], m_probe_idx[2], stIdx);
 #endif
       }
