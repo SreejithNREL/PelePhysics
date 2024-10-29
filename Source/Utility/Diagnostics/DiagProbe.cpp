@@ -133,12 +133,16 @@ DiagProbe::prepare(
   // If first time (including restart), write the file header. Fill
   // m_fieldIndices_d vector
   if (first_time) {
-    int nOutFields = static_cast<int>(m_fieldIndices_d.size());
     tmpProbeFile << "time,iter";
-    for (int f{0}; f < nOutFields; ++f) {
-      m_fieldIndices_d[f] = getFieldIndex(m_fieldNames[f], a_varNames);
-      tmpProbeFile << "," << m_fieldNames[f];
-    }
+    int nOutFields = static_cast<int>(m_fieldIndices_d.size());
+       amrex::Vector<int> m_fieldIndices(nOutFields, 0);
+       for (int f{0}; f < nOutFields; ++f) {
+         m_fieldIndices[f] = getFieldIndex(m_fieldNames[f], a_varNames);
+         tmpProbeFile << ","<<m_fieldNames[f];
+       }
+       amrex::Gpu::copy(
+         amrex::Gpu::hostToDevice, m_fieldIndices.begin(), m_fieldIndices.end(),
+         m_fieldIndices_d.begin());
     tmpProbeFile << "\n";
     tmpProbeFile.flush();
     first_time = false;
