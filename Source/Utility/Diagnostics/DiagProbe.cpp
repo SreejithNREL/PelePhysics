@@ -216,33 +216,22 @@ DiagProbe::processDiag(
 {
   // since we are only taking the single box, just create a single multifab
   amrex::Vector<amrex::MultiFab> planeData(1);
-  planeData[0].define(
-    m_probebox[0], m_probeboxDM[0], static_cast<int>(m_fieldNames.size()), 0);
-
+  planeData[0].define(m_probebox[0], m_probeboxDM[0], static_cast<int>(m_fieldNames.size()), 0);
+  m_values_at_probe.resize(m_fieldIndices.size());
   std::fill(m_values_at_probe.begin(), m_values_at_probe.end(), 0.0);
 
   // Is there a way to isolate the state array given a box? I am not sure about
   // this. So I am iterating using an MFI (useless operation) to find the box
 
-//   for (amrex::MFIter mfi(planeData[0]); mfi.isValid();
-  //     ++mfi) {
-  	  amrex::Real alpha, beta, gama;
-    amrex::Real value = 0.0;
-
-    alpha = 0.0;
-    beta = 0.0;
-    gama = 0.0;
-
-    const int XDIR = 0;
-    const int YDIR = 1;
-    const int ZDIR = 2;
+   for (amrex::MFIter mfi(planeData[0]); mfi.isValid();
+       ++mfi) {
 
 
-
-    const int state_idx = m_dmConvert[0][0];
+    const int state_idx = m_dmConvert[0][mfi.index()];
     auto const& state = a_state[m_finest_level_probe]->const_array(state_idx, 0);
-    amrex::Array3D<amrex::Real, 0, 1, 0, 1, 0, 1> cell_data{0.0};
+	    amrex::Print()<<"\n State first = "<<a_state[m_finest_level_probe]->maxIndex(0,0)<<" "<<a_state[m_finest_level_probe]->minIndex(0,0);
     for (int n{0}; n < m_fieldIndices.size(); n++) {
+    amrex::Array3D<amrex::Real, 0, 1, 0, 1, 0, 1> cell_data{0.0};
     	int stIdx = m_fieldIndices[n];
       if (m_interpType == Linear) {
 
@@ -252,12 +241,12 @@ DiagProbe::processDiag(
         	cell_data(1, 0, 0) = state(m_probe_idx[0] + 1, 0, 0, stIdx);
         }
 #elif (AMREX_SPACEDIM == 2)
-        {
+        
         	cell_data(0, 0, 0) = state(m_probe_idx[0], m_probe_idx[1], 0, stIdx);
         	cell_data(1, 0, 0) = state(m_probe_idx[0] + 1, m_probe_idx[1], 0, stIdx);
         	cell_data(0, 1, 0) = state(m_probe_idx[0], m_probe_idx[1] + 1, 0, stIdx);
         	cell_data(1, 1, 0) = state(m_probe_idx[0] + 1, m_probe_idx[1] + 1, 0, stIdx);
-        }
+        
 #else
         {
         	cell_data(0, 0, 0) =
@@ -280,26 +269,6 @@ DiagProbe::processDiag(
         }
 #endif
 
-
-        alpha = (m_probe_loc[XDIR] - x_low_cell[XDIR]) / dx_finest_lev_probe[XDIR];
-            if (AMREX_SPACEDIM >= 2) {
-              beta = (m_probe_loc[YDIR] - x_low_cell[YDIR]) / dx_finest_lev_probe[YDIR];
-            }
-            if (AMREX_SPACEDIM == 3) {
-              gama = (m_probe_loc[ZDIR] - x_low_cell[ZDIR]) / dx_finest_lev_probe[ZDIR];
-            }
-
-            value += (1.0 - alpha) * (1 - beta) * (1 - gama) * cell_data(0, 0, 0);
-            value += alpha * (1 - beta) * (1 - gama) * cell_data(0 + 1, 0, 0);
-            value += (1.0 - alpha) * beta * (1 - gama) * cell_data(0, 0 + 1, 0);
-            value += alpha * beta * (1 - gama) * cell_data(0 + 1, 0 + 1, 0);
-
-            value += (1.0 - alpha) * (1 - beta) * gama * cell_data(0, 0, 0 + 1);
-            value += alpha * (1 - beta) * gama * cell_data(0 + 1, 0, 0 + 1);
-            value += (1.0 - alpha) * beta * gama * cell_data(0, 0 + 1, 0 + 1);
-            value += alpha * beta * gama * cell_data(0 + 1, 0 + 1, 0 + 1);
-            m_values_at_probe[n] = value;
-
 	amrex::Print()<<"\nvalues = "<<m_probe_loc[0]<<" "<<m_probe_loc[1]<<" "<<x_low_cell[0]<<" "<<x_low_cell[1]<<" "<<dx_finest_lev_probe[0]<<" "<<dx_finest_lev_probe[1]<<" "<<m_values_at_probe[n];
         //amrex::Real interpolatedval = LinearInterpolate(
         //m_values_at_probe[n]  = LinearInterpolate(
@@ -308,14 +277,15 @@ DiagProbe::processDiag(
 #if (AMREX_SPACEDIM == 1)
         m_values_at_probe[n] = state(m_probe_idx[0], 0, 0, stIdx);
 #elif (AMREX_SPACEDIM == 2)
-        m_values_at_probe[n] = state(m_probe_idx[0], m_probe_idx[1], 0, stIdx);
+        m_values_at_probe[n] = n;//state(m_probe_idx[0], m_probe_idx[1], 0, stIdx);
+	amrex::Print()<<"\n State = "<<m_probe_idx[0]<<" "<<m_probe_idx[1]<<" "<<stIdx<<" ";
 #else
         m_values_at_probe[n] =
           state(m_probe_idx[0], m_probe_idx[1], m_probe_idx[2], stIdx);
 #endif
       }
     }
-  
+   }
 
   amrex::ParallelDescriptor::ReduceRealSum(
     m_values_at_probe.data(), static_cast<int>(m_values_at_probe.size()));
