@@ -228,6 +228,7 @@ DiagProbe::processDiag(
 	  const int state_idx = m_dmConvert[0][mfi.index()];
 	  auto const& state = a_state[m_finest_level_probe]->const_array(state_idx, 0);
 	  auto const& plane = planeData[0].array(mfi);
+	  auto* idx_d_p = m_fieldIndices.dataPtr();
 	  amrex::ParallelFor(
 	            bx, m_fieldNames.size(),
 	            [=] AMREX_GPU_DEVICE(int i, int j, int k, int n) noexcept {
