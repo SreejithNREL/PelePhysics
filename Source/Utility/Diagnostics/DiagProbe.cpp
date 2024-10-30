@@ -266,11 +266,11 @@ DiagProbe::processDiag(
         			m_probe_idx[0] + 1, m_probe_idx[1] + 1, m_probe_idx[2] + 1, stIdx);
         }
 #endif
+        m_values_at_probe[n] = 1.0;
 	amrex::Print()<<"\nvalues = "<<m_probe_loc[0]<<" "<<m_probe_loc[1]<<" "<<x_low_cell[0]<<" "<<x_low_cell[1]<<" "<<dx_finest_lev_probe[0]<<" "<<dx_finest_lev_probe[1]<<" "<<m_values_at_probe[n];
         //amrex::Real interpolatedval = LinearInterpolate(
         //m_values_at_probe[n]  = LinearInterpolate(
         //  m_probe_loc, x_low_cell, cell_data, dx_finest_lev_probe);
-        //m_values_at_probe[n] = 0.0;
       } else if (m_interpType == CellCenter) {
 #if (AMREX_SPACEDIM == 1)
         m_values_at_probe[n] = state(m_probe_idx[0], 0, 0, stIdx);
