@@ -233,6 +233,7 @@ DiagProbe::processDiag(
 	            bx, m_fieldNames.size(),
 	            [=] AMREX_GPU_DEVICE(int i, int j, int k, int n) noexcept {
 	              int stIdx = idx_d_p[n];
+	              amrex::Print()<<"\n StIDx = "<<stIdx;
 
 	            });
 
