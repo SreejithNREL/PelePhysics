@@ -75,7 +75,7 @@ DiagProbe::init(const std::string& a_prefix, std::string_view a_diagName)
   AMREX_ASSERT(nOutFields > 0);
   m_values_at_probe.resize(nOutFields);
   m_fieldNames.resize(nOutFields);
-  m_fieldIndices_d.resize(nOutFields);
+  m_fieldIndices.resize(nOutFields);
   for (int f{0}; f < nOutFields; ++f) {
     pp.get("field_names", m_fieldNames[f], f);
     m_values_at_probe[f] = 0.0;
@@ -134,15 +134,11 @@ DiagProbe::prepare(
   // m_fieldIndices_d vector
   if (first_time) {
     tmpProbeFile << "time,iter";
-    int nOutFields = static_cast<int>(m_fieldIndices_d.size());
-       amrex::Vector<int> m_fieldIndices(nOutFields, 0);
-       for (int f{0}; f < nOutFields; ++f) {
-         m_fieldIndices[f] = getFieldIndex(m_fieldNames[f], a_varNames);
-         tmpProbeFile << ","<<m_fieldNames[f];
-       }
-       amrex::Gpu::copy(
-         amrex::Gpu::hostToDevice, m_fieldIndices.begin(), m_fieldIndices.end(),
-         m_fieldIndices_d.begin());
+    int nOutFields = static_cast<int>(m_fieldIndices.size());
+    for (int f{0}; f < nOutFields; ++f) {
+    	m_fieldIndices[f] = getFieldIndex(m_fieldNames[f], a_varNames);
+    	tmpProbeFile << ","<<m_fieldNames[f];
+    }
     tmpProbeFile << "\n";
     tmpProbeFile.flush();
     first_time = false;
@@ -228,77 +224,62 @@ DiagProbe::processDiag(
   // Is there a way to isolate the state array given a box? I am not sure about
   // this. So I am iterating using an MFI (useless operation) to find the box
 
-   for (amrex::MFIter mfi(planeData[0], amrex::TilingIfNotGPU()); mfi.isValid();
+   for (amrex::MFIter mfi(planeData[0]); mfi.isValid();
        ++mfi) {
     const auto& bx = mfi.tilebox();
     const int state_idx = m_dmConvert[0][mfi.index()];
-    auto const& state =
-      a_state[m_finest_level_probe]->const_array(state_idx, 0);
-    auto* idx_d_p = m_fieldIndices_d.dataPtr();
-    int nitems =m_fieldIndices_d.size();
-    //auto cell_data_d = cell_data;
-    auto &m_interpType_d = m_interpType;
-    auto &m_probe_loc_d = m_probe_loc;
-    auto &m_probe_idx_d = m_probe_idx;
-    auto &x_low_cell_d = x_low_cell;
-    auto &dx_finest_lev_probe_d = dx_finest_lev_probe;
-
-    //for (int n{0}; n < m_fieldIndices_d.size(); n++) {
-    amrex::ParallelFor(nitems,[=] AMREX_GPU_DEVICE (int nindex){
-    	amrex::Array3D<amrex::Real, 0, 1, 0, 1, 0, 1> cell_data_d{0.0}; // Neighbour cell solution values
-    	int stIdx = idx_d_p[nindex];
-      if (m_interpType_d == Linear) {
+    auto const& state = a_state[m_finest_level_probe]->const_array(state_idx, 0);
+    for (int n{0}; n < m_fieldIndices.size(); n++) {
+    	int stIdx = m_fieldIndices[n];
+      if (m_interpType == Linear) {
 
 #if (AMREX_SPACEDIM == 1)
         {
-        	cell_data_d(0, 0, 0) = state(m_probe_idx_d[0], 0, 0, stIdx);
-        	cell_data_d(1, 0, 0) = state(m_probe_idx_d[0] + 1, 0, 0, stIdx);
+        	cell_data(0, 0, 0) = state(m_probe_idx[0], 0, 0, stIdx);
+        	cell_data(1, 0, 0) = state(m_probe_idx[0] + 1, 0, 0, stIdx);
         }
 #elif (AMREX_SPACEDIM == 2)
         {
-        	cell_data_d(0, 0, 0) = state(m_probe_idx_d[0], m_probe_idx_d[1], 0, stIdx);
-        	cell_data_d(1, 0, 0) =
-            state(m_probe_idx_d[0] + 1, m_probe_idx_d[1], 0, stIdx);
-        	cell_data_d(0, 1, 0) =
-            state(m_probe_idx_d[0], m_probe_idx_d[1] + 1, 0, stIdx);
-        	cell_data_d(1, 1, 0) =
-            state(m_probe_idx_d[0] + 1, m_probe_idx_d[1] + 1, 0, stIdx);
+        	cell_data(0, 0, 0) = state(m_probe_idx[0], m_probe_idx[1], 0, stIdx);
+        	cell_data(1, 0, 0) = state(m_probe_idx[0] + 1, m_probe_idx[1], 0, stIdx);
+        	cell_data(0, 1, 0) = state(m_probe_idx[0], m_probe_idx[1] + 1, 0, stIdx);
+        	cell_data(1, 1, 0) = state(m_probe_idx[0] + 1, m_probe_idx[1] + 1, 0, stIdx);
         }
 #else
         {
-        	cell_data_d(0, 0, 0) =
-            state(m_probe_idx_d[0], m_probe_idx_d[1], m_probe_idx_d[2], stIdx);
-        	cell_data_d(1, 0, 0) =
-            state(m_probe_idx_d[0] + 1, m_probe_idx_d[1], m_probe_idx_d[2], stIdx);
-        	cell_data_d(0, 1, 0) =
-            state(m_probe_idx_d[0], m_probe_idx_d[1] + 1, m_probe_idx_d[2], stIdx);
-        	cell_data_d(1, 1, 0) = state(
-        			m_probe_idx_d[0] + 1, m_probe_idx_d[1] + 1, m_probe_idx_d[2], stIdx);
+        	cell_data(0, 0, 0) =
+            state(m_probe_idx[0], m_probe_idx[1], m_probe_idx[2], stIdx);
+        	cell_data(1, 0, 0) =
+            state(m_probe_idx[0] + 1, m_probe_idx[1], m_probe_idx[2], stIdx);
+        	cell_data(0, 1, 0) =
+            state(m_probe_idx[0], m_probe_idx[1] + 1, m_probe_idx[2], stIdx);
+        	cell_data(1, 1, 0) = state(
+        			m_probe_idx[0] + 1, m_probe_idx[1] + 1, m_probe_idx[2], stIdx);
 
-        	cell_data_d(0, 0, 1) =
-            state(m_probe_idx_d[0], m_probe_idx_d[1], m_probe_idx_d[2] + 1, stIdx);
-        	cell_data_d(1, 0, 1) = state(
-        			m_probe_idx_d[0] + 1, m_probe_idx_d[1], m_probe_idx_d[2] + 1, stIdx);
-        	cell_data_d(0, 1, 1) = state(
-        			m_probe_idx_d[0], m_probe_idx_d[1] + 1, m_probe_idx_d[2] + 1, stIdx);
-        	cell_data_d(1, 1, 1) = state(
-        			m_probe_idx_d[0] + 1, m_probe_idx_d[1] + 1, m_probe_idx_d[2] + 1, stIdx);
+        	cell_data(0, 0, 1) =
+            state(m_probe_idx[0], m_probe_idx[1], m_probe_idx[2] + 1, stIdx);
+        	cell_data(1, 0, 1) = state(
+        			m_probe_idx[0] + 1, m_probe_idx[1], m_probe_idx[2] + 1, stIdx);
+        	cell_data(0, 1, 1) = state(
+        			m_probe_idx[0], m_probe_idx[1] + 1, m_probe_idx[2] + 1, stIdx);
+        	cell_data(1, 1, 1) = state(
+        			m_probe_idx[0] + 1, m_probe_idx[1] + 1, m_probe_idx[2] + 1, stIdx);
         }
 #endif
         amrex::Real interpolatedval = LinearInterpolate(
-          m_probe_loc_d, x_low_cell_d, cell_data_d, dx_finest_lev_probe);
-        m_values_at_probe[nindex] = interpolatedval;
-      } else if (m_interpType_d == CellCenter) {
+          m_probe_loc, x_low_cell, cell_data, dx_finest_lev_probe);
+        m_values_at_probe[n] = interpolatedval;
+      } else if (m_interpType == CellCenter) {
 #if (AMREX_SPACEDIM == 1)
-        m_values_at_probe[nindex] = state(m_probe_idx_d[0], 0, 0, stIdx);
+        m_values_at_probe[n] = state(m_probe_idx[0], 0, 0, stIdx);
 #elif (AMREX_SPACEDIM == 2)
-        m_values_at_probe[nindex] = state(m_probe_idx_d[0], m_probe_idx_d[1], 0, stIdx);
+        m_values_at_probe[n] = state(m_probe_idx[0], m_probe_idx[1], 0, stIdx);
 #else
-        m_values_at_probe[nindex] =
-          state(m_probe_idx_d[0], m_probe_idx_d[1], m_probe_idx_d[2], stIdx);
+        m_values_at_probe[n] =
+          state(m_probe_idx[0], m_probe_idx[1], m_probe_idx[2], stIdx);
 #endif
       }
-    });
+    }
   }
 
   amrex::ParallelDescriptor::ReduceRealSum(
