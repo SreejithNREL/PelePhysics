@@ -224,11 +224,11 @@ DiagProbe::processDiag(
   // Is there a way to isolate the state array given a box? I am not sure about
   // this. So I am iterating using an MFI (useless operation) to find the box
 
-   for (amrex::MFIter mfi(planeData[0]); mfi.isValid();
-       ++mfi) {
-    const auto& bx = mfi.tilebox();
-    const int state_idx = m_dmConvert[0][mfi.index()];
+//   for (amrex::MFIter mfi(planeData[0]); mfi.isValid();
+  //     ++mfi) {
+    const int state_idx = m_dmConvert[0][0];
     auto const& state = a_state[m_finest_level_probe]->const_array(state_idx, 0);
+    amrex::Array3D<amrex::Real, 0, 1, 0, 1, 0, 1> cell_data{0.0};
     for (int n{0}; n < m_fieldIndices.size(); n++) {
     	int stIdx = m_fieldIndices[n];
       if (m_interpType == Linear) {
@@ -266,9 +266,11 @@ DiagProbe::processDiag(
         			m_probe_idx[0] + 1, m_probe_idx[1] + 1, m_probe_idx[2] + 1, stIdx);
         }
 #endif
-        amrex::Real interpolatedval = LinearInterpolate(
-          m_probe_loc, x_low_cell, cell_data, dx_finest_lev_probe);
-        m_values_at_probe[n] = interpolatedval;
+	amrex::Print()<<"\nvalues = "<<m_probe_loc[0]<<" "<<m_probe_loc[1]<<" "<<x_low_cell[0]<<" "<<x_low_cell[1]<<" "<<dx_finest_lev_probe[0]<<" "<<dx_finest_lev_probe[1]<<" "<<m_values_at_probe[n];
+        //amrex::Real interpolatedval = LinearInterpolate(
+        //m_values_at_probe[n]  = LinearInterpolate(
+        //  m_probe_loc, x_low_cell, cell_data, dx_finest_lev_probe);
+        //m_values_at_probe[n] = 0.0;
       } else if (m_interpType == CellCenter) {
 #if (AMREX_SPACEDIM == 1)
         m_values_at_probe[n] = state(m_probe_idx[0], 0, 0, stIdx);
@@ -280,7 +282,7 @@ DiagProbe::processDiag(
 #endif
       }
     }
-  }
+  
 
   amrex::ParallelDescriptor::ReduceRealSum(
     m_values_at_probe.data(), static_cast<int>(m_values_at_probe.size()));
