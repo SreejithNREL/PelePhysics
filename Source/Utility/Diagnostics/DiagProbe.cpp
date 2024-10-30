@@ -226,6 +226,19 @@ DiagProbe::processDiag(
 
 //   for (amrex::MFIter mfi(planeData[0]); mfi.isValid();
   //     ++mfi) {
+  	  amrex::Real alpha, beta, gama;
+    amrex::Real value = 0.0;
+
+    alpha = 0.0;
+    beta = 0.0;
+    gama = 0.0;
+
+    const int XDIR = 0;
+    const int YDIR = 1;
+    const int ZDIR = 2;
+
+
+
     const int state_idx = m_dmConvert[0][0];
     auto const& state = a_state[m_finest_level_probe]->const_array(state_idx, 0);
     amrex::Array3D<amrex::Real, 0, 1, 0, 1, 0, 1> cell_data{0.0};
@@ -266,7 +279,27 @@ DiagProbe::processDiag(
         			m_probe_idx[0] + 1, m_probe_idx[1] + 1, m_probe_idx[2] + 1, stIdx);
         }
 #endif
-        m_values_at_probe[n] = 1.0;
+
+
+        alpha = (m_probe_loc[XDIR] - x_low_cell[XDIR]) / dx_finest_lev_probe[XDIR];
+            if (AMREX_SPACEDIM >= 2) {
+              beta = (m_probe_loc[YDIR] - x_low_cell[YDIR]) / dx_finest_lev_probe[YDIR];
+            }
+            if (AMREX_SPACEDIM == 3) {
+              gama = (m_probe_loc[ZDIR] - x_low_cell[ZDIR]) / dx_finest_lev_probe[ZDIR];
+            }
+
+            value += (1.0 - alpha) * (1 - beta) * (1 - gama) * cell_data(0, 0, 0);
+            value += alpha * (1 - beta) * (1 - gama) * cell_data(0 + 1, 0, 0);
+            value += (1.0 - alpha) * beta * (1 - gama) * cell_data(0, 0 + 1, 0);
+            value += alpha * beta * (1 - gama) * cell_data(0 + 1, 0 + 1, 0);
+
+            value += (1.0 - alpha) * (1 - beta) * gama * cell_data(0, 0, 0 + 1);
+            value += alpha * (1 - beta) * gama * cell_data(0 + 1, 0, 0 + 1);
+            value += (1.0 - alpha) * beta * gama * cell_data(0, 0 + 1, 0 + 1);
+            value += alpha * beta * gama * cell_data(0 + 1, 0 + 1, 0 + 1);
+            m_values_at_probe[n] = value;
+
 	amrex::Print()<<"\nvalues = "<<m_probe_loc[0]<<" "<<m_probe_loc[1]<<" "<<x_low_cell[0]<<" "<<x_low_cell[1]<<" "<<dx_finest_lev_probe[0]<<" "<<dx_finest_lev_probe[1]<<" "<<m_values_at_probe[n];
         //amrex::Real interpolatedval = LinearInterpolate(
         //m_values_at_probe[n]  = LinearInterpolate(
