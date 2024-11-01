@@ -244,23 +244,25 @@ DiagProbe::processDiag(
 	  amrex::ParallelFor(m_fieldIndices_d.size(), [=] AMREX_GPU_DEVICE(int n) noexcept
 	  {
 		  int stIdx = idx_d_p[n];
-		  amrex::AllPrint()<<"\n StIDx = "<<stIdx;
+		  //amrex::AllPrint()<<"\n StIDx = "<<stIdx;
 		  tmp_values_d[n]=n;
-		  amrex::AllPrint()<<"\n tmp_values_d"<<tmp_values_d[n];
+		  //amrex::AllPrint()<<"\n tmp_values_d"<<tmp_values_d[n];
 	  });
 	  //Gpu::copy(Gpu::deviceToHost, tmp_values_d.begin(), tmp_values_d.end(), s_ext.begin());
-	  amrex::AllPrint()<<"\n tmp_values_d secnd "<<tmp_values_d[0]<<" "<<tmp_values_d[1]<<" "<<tmp_values_d[2];
+	  //amrex::AllPrint()<<"\n tmp_values_d secnd "<<tmp_values_d[0]<<" "<<tmp_values_d[1]<<" "<<tmp_values_d[2];
   }
-  amrex::AllPrint()<<"\n tmp_values_d third "<<m_values_at_probe_d[0]<<" "<<m_values_at_probe_d[1]<<" "<<m_values_at_probe_d[2];
+  //amrex::AllPrint()<<"\n tmp_values_d third "<<m_values_at_probe_d[0]<<" "<<m_values_at_probe_d[1]<<" "<<m_values_at_probe_d[2];
 
   amrex::ParallelDescriptor::ReduceRealSum(
     m_values_at_probe_d.data(), static_cast<int>(m_values_at_probe_d.size()));
 
+  amrex::Gpu::copy(amrex::Gpu::deviceToHost, m_values_at_probe_d.begin(), m_values_at_probe_d.end(), m_values_at_probe.begin());
+  
   // Write probe values to file
   if (amrex::ParallelDescriptor::IOProcessor()) {
     tmpProbeFile << a_time << "," << a_nstep;
-    for (int f{0}; f < m_values_at_probe_d.size(); ++f) {
-      tmpProbeFile << "," << m_values_at_probe_d[f];
+    for (int f{0}; f < m_values_at_probe.size(); ++f) {
+      tmpProbeFile << "," << m_values_at_probe[f];
     }
     tmpProbeFile << "\n";
     tmpProbeFile.flush();
