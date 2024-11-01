@@ -5,6 +5,8 @@
 #include <regex>
 #include <cstdio>
 
+AMREX_GPU_DEVICE
+AMREX_FORCE_INLINE
 amrex::Real
 LinearInterpolate(
   amrex::GpuArray<amrex::Real, AMREX_SPACEDIM> xp,
@@ -240,12 +242,24 @@ DiagProbe::processDiag(
 	  auto const& plane = planeData[0].array(mfi);
 	  auto* idx_d_p = m_fieldIndices_d.dataPtr();
 	  amrex::Real* tmp_values_d = m_values_at_probe_d.data();
+	    auto const& m_probe_idx_d = m_probe_idx;
+
+	  auto &m_probe_loc_d = m_probe_loc;
+	  auto &x_low_cell_d = x_low_cell;
+	  auto &dx_finest_lev_probe_d = dx_finest_lev_probe;
 
 	  amrex::ParallelFor(m_fieldIndices_d.size(), [=] AMREX_GPU_DEVICE(int n) noexcept
 	  {
+	  amrex::Array3D<amrex::Real, 0, 1, 0, 1, 0, 1> cell_data_d{0.0}; // Neighbour cell solution values
 		  int stIdx = idx_d_p[n];
 		  //amrex::AllPrint()<<"\n StIDx = "<<stIdx;
 		  tmp_values_d[n]=n;
+		  cell_data_d(0, 0, 0) =  state(m_probe_idx_d[0], m_probe_idx_d[1], 0, stIdx);
+		  cell_data_d(1, 0, 0) =  state(m_probe_idx_d[0] + 1, m_probe_idx_d[1], 0, stIdx);
+		  cell_data_d(0, 1, 0) =  state(m_probe_idx_d[0], m_probe_idx_d[1] + 1, 0, stIdx);
+		  cell_data_d(1, 1, 0) =  state(m_probe_idx_d[0] + 1, m_probe_idx_d[1] + 1, 0, stIdx);
+		  tmp_values_d[n] = LinearInterpolate(m_probe_loc_d, x_low_cell_d, cell_data_d, dx_finest_lev_probe_d);
+//		  amrex::AllPrint()<<"\n cell_data_d(1, 1, 0) = "<<state(m_probe_idx_d[0] + 1, m_probe_idx_d[1] + 1, 0, stIdx);
 		  //amrex::AllPrint()<<"\n tmp_values_d"<<tmp_values_d[n];
 	  });
 	  //Gpu::copy(Gpu::deviceToHost, tmp_values_d.begin(), tmp_values_d.end(), s_ext.begin());
