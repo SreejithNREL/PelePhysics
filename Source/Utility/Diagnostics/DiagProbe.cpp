@@ -247,25 +247,66 @@ DiagProbe::processDiag(
 	  auto &m_probe_loc_d = m_probe_loc;
 	  auto &x_low_cell_d = x_low_cell;
 	  auto &dx_finest_lev_probe_d = dx_finest_lev_probe;
+	  auto &m_interpType_d = m_interpType;
 
 	  amrex::ParallelFor(m_fieldIndices_d.size(), [=] AMREX_GPU_DEVICE(int n) noexcept
 	  {
-	  amrex::Array3D<amrex::Real, 0, 1, 0, 1, 0, 1> cell_data_d{0.0}; // Neighbour cell solution values
+		  amrex::Array3D<amrex::Real, 0, 1, 0, 1, 0, 1> cell_data_d{0.0}; // Neighbour cell solution values
 		  int stIdx = idx_d_p[n];
-		  //amrex::AllPrint()<<"\n StIDx = "<<stIdx;
-		  tmp_values_d[n]=n;
-		  cell_data_d(0, 0, 0) =  state(m_probe_idx_d[0], m_probe_idx_d[1], 0, stIdx);
-		  cell_data_d(1, 0, 0) =  state(m_probe_idx_d[0] + 1, m_probe_idx_d[1], 0, stIdx);
-		  cell_data_d(0, 1, 0) =  state(m_probe_idx_d[0], m_probe_idx_d[1] + 1, 0, stIdx);
-		  cell_data_d(1, 1, 0) =  state(m_probe_idx_d[0] + 1, m_probe_idx_d[1] + 1, 0, stIdx);
-		  tmp_values_d[n] = LinearInterpolate(m_probe_loc_d, x_low_cell_d, cell_data_d, dx_finest_lev_probe_d);
-//		  amrex::AllPrint()<<"\n cell_data_d(1, 1, 0) = "<<state(m_probe_idx_d[0] + 1, m_probe_idx_d[1] + 1, 0, stIdx);
-		  //amrex::AllPrint()<<"\n tmp_values_d"<<tmp_values_d[n];
+
+	      if (m_interpType_d == Linear)
+	      {
+
+	#if (AMREX_SPACEDIM == 1)
+	        {
+	        	cell_data_d(0, 0, 0) = state(m_probe_idx_d[0], 0, 0, stIdx);
+	        	cell_data_d(1, 0, 0) = state(m_probe_idx_d[0] + 1, 0, 0, stIdx);
+	        }
+	#elif (AMREX_SPACEDIM == 2)
+	        {
+	        	cell_data_d(0, 0, 0) = state(m_probe_idx_d[0], m_probe_idx_d[1], 0, stIdx);
+	        	cell_data_d(1, 0, 0) =
+	            state(m_probe_idx_d[0] + 1, m_probe_idx_d[1], 0, stIdx);
+	        	cell_data_d(0, 1, 0) =
+	            state(m_probe_idx_d[0], m_probe_idx_d[1] + 1, 0, stIdx);
+	        	cell_data_d(1, 1, 0) =
+	            state(m_probe_idx_d[0] + 1, m_probe_idx_d[1] + 1, 0, stIdx);
+	        }
+	#else
+	        {
+	        	cell_data_d(0, 0, 0) =
+	            state(m_probe_idx_d[0], m_probe_idx_d[1], m_probe_idx_d[2], stIdx);
+	        	cell_data_d(1, 0, 0) =
+	            state(m_probe_idx_d[0] + 1, m_probe_idx_d[1], m_probe_idx_d[2], stIdx);
+	        	cell_data_d(0, 1, 0) =
+	            state(m_probe_idx_d[0], m_probe_idx_d[1] + 1, m_probe_idx_d[2], stIdx);
+	        	cell_data_d(1, 1, 0) = state(
+	        			m_probe_idx_d[0] + 1, m_probe_idx_d[1] + 1, m_probe_idx_d[2], stIdx);
+
+	        	cell_data_d(0, 0, 1) =
+	            state(m_probe_idx_d[0], m_probe_idx_d[1], m_probe_idx_d[2] + 1, stIdx);
+	        	cell_data_d(1, 0, 1) = state(
+	        			m_probe_idx_d[0] + 1, m_probe_idx_d[1], m_probe_idx_d[2] + 1, stIdx);
+	        	cell_data_d(0, 1, 1) = state(
+	        			m_probe_idx_d[0], m_probe_idx_d[1] + 1, m_probe_idx_d[2] + 1, stIdx);
+	        	cell_data_d(1, 1, 1) = state(
+	        			m_probe_idx_d[0] + 1, m_probe_idx_d[1] + 1, m_probe_idx_d[2] + 1, stIdx);
+	        }
+	#endif
+	        tmp_values_d[n] = LinearInterpolate(m_probe_loc_d, x_low_cell_d, cell_data_d, dx_finest_lev_probe_d);
+	      }
+	      else if (m_interpType_d == CellCenter)
+	      {
+	#if (AMREX_SPACEDIM == 1)
+	    	  tmp_values_d[n] = state(m_probe_idx_d[0], 0, 0, stIdx);
+	#elif (AMREX_SPACEDIM == 2)
+	    	  tmp_values_d[n] = state(m_probe_idx_d[0], m_probe_idx_d[1], 0, stIdx);
+	#else
+	    	  tmp_values_d[n] = state(m_probe_idx_d[0], m_probe_idx_d[1], m_probe_idx_d[2], stIdx);
+	#endif
+	      }
 	  });
-	  //Gpu::copy(Gpu::deviceToHost, tmp_values_d.begin(), tmp_values_d.end(), s_ext.begin());
-	  //amrex::AllPrint()<<"\n tmp_values_d secnd "<<tmp_values_d[0]<<" "<<tmp_values_d[1]<<" "<<tmp_values_d[2];
   }
-  //amrex::AllPrint()<<"\n tmp_values_d third "<<m_values_at_probe_d[0]<<" "<<m_values_at_probe_d[1]<<" "<<m_values_at_probe_d[2];
 
   amrex::ParallelDescriptor::ReduceRealSum(
     m_values_at_probe_d.data(), static_cast<int>(m_values_at_probe_d.size()));
