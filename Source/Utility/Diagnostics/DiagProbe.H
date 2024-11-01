@@ -33,6 +33,9 @@ private:
   // Variables output
   amrex::Vector<std::string> m_fieldNames; // variable names to be interpolated, as given by the user
   amrex::Vector<int> m_fieldIndices; // variables to be interpolated, as given by the user
+  amrex::Vector<amrex::Real> m_values_at_probe; // variables to be interpolated, as given by the user
+  amrex::Gpu::DeviceVector<int> m_fieldIndices_d;
+  amrex::Gpu::DeviceVector<amrex::Real> m_values_at_probe_d;
 
   int m_finest_level_probe; // Finest level at which probe is located
   int m_box_probe_num; // The box number at lev=m_finest_level_probe in which
@@ -46,8 +49,6 @@ private:
   // Interpolation data
   InterpType m_interpType; // Interpolation type ("CellCenter" or "Linear" only)
   amrex::Array3D<amrex::Real, 0, 1, 0, 1, 0, 1> cell_data{0.0}; // Neighbour cell solution values
-  amrex::Vector<amrex::Real> m_values_at_probe{0.0}; // Vector of interpolated solution values at probe location that is
-
 
   // Probe file name
   std::ofstream tmpProbeFile; // Ofstream object for writing probe file data

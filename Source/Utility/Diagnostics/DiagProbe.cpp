@@ -79,6 +79,9 @@ DiagProbe::init(const std::string& a_prefix, std::string_view a_diagName)
   m_values_at_probe.resize(nOutFields);
   m_fieldNames.resize(nOutFields);
   m_fieldIndices.resize(nOutFields);
+  m_fieldIndices_d.resize(nOutFields);
+  m_values_at_probe_d.resize(nOutFields);
+
   for (int f{0}; f < nOutFields; ++f) {
     pp.get("field_names", m_fieldNames[f], f);
     m_values_at_probe[f] = 0.0;
@@ -139,56 +142,62 @@ DiagProbe::prepare(
     int nOutFields = static_cast<int>(m_fieldIndices.size());
     for (int f{0}; f < nOutFields; ++f) {
     	m_fieldIndices[f] = getFieldIndex(m_fieldNames[f], a_varNames);
+    	m_values_at_probe[f]=0.0;
     	tmpProbeFile << ","<<m_fieldNames[f];
     }
     tmpProbeFile << "\n";
     tmpProbeFile.flush();
+
+    amrex::Gpu::copy(amrex::Gpu::hostToDevice, m_fieldIndices.begin(), m_fieldIndices.end(), m_fieldIndices_d.begin());
     first_time = false;
   }
+
 
   // Search for finest level and location of the probe in index space.
   bool probe_found = false;
 
-  for (int lev = a_nlevels - 1; lev >= 0; lev--) {
-    const amrex::Real* dx = a_geoms[lev].CellSize();
-    const amrex::Real* problo = a_geoms[lev].ProbLo();
-    amrex::Real dist[AMREX_SPACEDIM];
+  for (int lev = a_nlevels - 1; lev >= 0; lev--)
+  {
+	  const amrex::Real* dx = a_geoms[lev].CellSize();
+	  const amrex::Real* problo = a_geoms[lev].ProbLo();
+	  amrex::Real dist[AMREX_SPACEDIM];
 
-    // Calculate distance of probe from the domain low values
-    for (int idim = 0; idim < AMREX_SPACEDIM; idim++) {
-      dist[idim] = (m_probe_loc[idim] - (problo[idim])) / dx[idim];
-    }
+	  // Calculate distance of probe from the domain low values
+	  for (int idim = 0; idim < AMREX_SPACEDIM; idim++)
+	  {
+		  dist[idim] = (m_probe_loc[idim] - (problo[idim])) / dx[idim];
+	  }
 
-    // index of the cell where probe is located.
-    amrex::IntVect idx_lev(AMREX_D_DECL(
-      static_cast<int>(dist[0]), static_cast<int>(dist[1]),
-      static_cast<int>(dist[2])));
+	  // index of the cell where probe is located.
+	  amrex::IntVect idx_lev(AMREX_D_DECL(static_cast<int>(dist[0]), static_cast<int>(dist[1]), static_cast<int>(dist[2])));
 
-    // loop through all boxes in lev to find which box the cell identified above is located.
-    for (int i = 0; i < a_grids[lev].size(); i++) {
-      auto cBox = a_grids[lev][i];
-      if (cBox.contains(idx_lev) && !probe_found) {
-        // box found. store the level and  box number. set
-        // probe_found to true to stop searching any further
-        m_finest_level_probe = lev;
-        m_box_probe_num = i;
-        for (int idim = 0; idim < AMREX_SPACEDIM; idim++) {
-          // Store grid size, cell corner and probe index
-          dx_finest_lev_probe[idim] = dx[idim];
-          m_probe_idx[idim] = idx_lev[idim];
-          x_low_cell[idim] =
-            problo[idim] + dx[idim] * 0.5 + m_probe_idx[idim] * dx[idim];
-        }
-        probe_found = true;
-      }
-    }
+	  // loop through all boxes in lev to find which box the cell identified above is located.
+	  for (int i = 0; i < a_grids[lev].size(); i++)
+	  {
+		  auto cBox = a_grids[lev][i];
+		  if (cBox.contains(idx_lev) && !probe_found)
+		  {
+			  // box found. store the level and  box number. set
+			  // probe_found to true to stop searching any further
+			  m_finest_level_probe = lev;
+			  m_box_probe_num = i;
+			  for (int idim = 0; idim < AMREX_SPACEDIM; idim++)
+			  {
+				  // Store grid size, cell corner and probe index
+				  dx_finest_lev_probe[idim] = dx[idim];
+				  m_probe_idx[idim] = idx_lev[idim];
+				  x_low_cell[idim] = problo[idim] + dx[idim] * 0.5 + m_probe_idx[idim] * dx[idim];
+			  }
+			  probe_found = true;
+		  }
+	  }
   }
 
   // What is the probe is still not found? I am not sure such a scenario might
   // exist
-  if (!probe_found) {
-    amrex::Abort(
-      "\nUnable to find the probe location. There seems to be something wrong");
+  if (!probe_found)
+  {
+	  amrex::Abort("\nUnable to find the probe location. There seems to be something wrong");
   }
 
   // We are storing only the single box which contains the probe
@@ -221,6 +230,7 @@ DiagProbe::processDiag(
   planeData[0].define(m_probebox[0], m_probeboxDM[0], static_cast<int>(m_fieldNames.size()), 0);
   m_values_at_probe.resize(m_fieldIndices.size());
   std::fill(m_values_at_probe.begin(), m_values_at_probe.end(), 0.0);
+  amrex::Gpu::copy(amrex::Gpu::hostToDevice, m_values_at_probe.begin(), m_values_at_probe.end(), m_values_at_probe_d.begin());
 
   for (amrex::MFIter mfi(planeData[0], amrex::TilingIfNotGPU()); mfi.isValid(); ++mfi)
   {
@@ -228,29 +238,29 @@ DiagProbe::processDiag(
 	  const int state_idx = m_dmConvert[0][mfi.index()];
 	  auto const& state = a_state[m_finest_level_probe]->const_array(state_idx, 0);
 	  auto const& plane = planeData[0].array(mfi);
-	  auto* idx_d_p = m_fieldIndices.dataPtr();
-	  amrex::ParallelFor(
-	            bx, m_fieldNames.size(),
-	            [=] AMREX_GPU_DEVICE(int i, int j, int k, int n) noexcept {
-	              int stIdx = idx_d_p[n];
-	              amrex::Print()<<"\n StIDx = "<<stIdx;
+	  auto* idx_d_p = m_fieldIndices_d.dataPtr();
+	  amrex::Real* tmp_values_d = m_values_at_probe_d.data();
 
-	            });
-
+	  amrex::ParallelFor(m_fieldIndices_d.size(), [=] AMREX_GPU_DEVICE(int n) noexcept
+	  {
+		  int stIdx = idx_d_p[n];
+		  amrex::AllPrint()<<"\n StIDx = "<<stIdx;
+		  tmp_values_d[n]=n;
+		  amrex::AllPrint()<<"\n tmp_values_d"<<tmp_values_d[n];
+	  });
+	  //Gpu::copy(Gpu::deviceToHost, tmp_values_d.begin(), tmp_values_d.end(), s_ext.begin());
+	  amrex::AllPrint()<<"\n tmp_values_d secnd "<<tmp_values_d[0]<<" "<<tmp_values_d[1]<<" "<<tmp_values_d[2];
   }
-
-
-
-
+  amrex::AllPrint()<<"\n tmp_values_d third "<<m_values_at_probe_d[0]<<" "<<m_values_at_probe_d[1]<<" "<<m_values_at_probe_d[2];
 
   amrex::ParallelDescriptor::ReduceRealSum(
-    m_values_at_probe.data(), static_cast<int>(m_values_at_probe.size()));
+    m_values_at_probe_d.data(), static_cast<int>(m_values_at_probe_d.size()));
 
   // Write probe values to file
   if (amrex::ParallelDescriptor::IOProcessor()) {
     tmpProbeFile << a_time << "," << a_nstep;
-    for (int f{0}; f < m_values_at_probe.size(); ++f) {
-      tmpProbeFile << "," << m_values_at_probe[f];
+    for (int f{0}; f < m_values_at_probe_d.size(); ++f) {
+      tmpProbeFile << "," << m_values_at_probe_d[f];
     }
     tmpProbeFile << "\n";
     tmpProbeFile.flush();
