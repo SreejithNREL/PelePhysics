@@ -188,7 +188,8 @@ DiagProbe::prepare(
 				  // Store grid size, cell corner and probe index
 				  dx_finest_lev_probe[idim] = dx[idim];
 				  m_probe_idx[idim] = idx_lev[idim];
-				  x_low_cell[idim] = problo[idim] + dx[idim] * 0.5 + m_probe_idx[idim] * dx[idim];
+				  x_low_cell[idim] = std::floor((m_probe_loc[idim]-(problo[idim] + dx[idim] * 0.5))/dx[idim])*dx[idim]+(problo[idim] + dx[idim] * 0.5);
+				  low_cell_idx[idim] = static_cast<int>((x_low_cell[idim] - (problo[idim])) / dx[idim]);
 			  }
 			  probe_found = true;
 		  }
@@ -242,7 +243,8 @@ DiagProbe::processDiag(
 	  auto const& plane = planeData[0].array(mfi);
 	  auto* idx_d_p = m_fieldIndices_d.dataPtr();
 	  amrex::Real* tmp_values_d = m_values_at_probe_d.data();
-	    auto const& m_probe_idx_d = m_probe_idx;
+	  auto const& m_probe_idx_d = m_probe_idx;
+	  auto const& low_cell_idx_d = low_cell_idx;
 
 	  auto &m_probe_loc_d = m_probe_loc;
 	  auto &x_low_cell_d = x_low_cell;
@@ -259,38 +261,27 @@ DiagProbe::processDiag(
 
 	#if (AMREX_SPACEDIM == 1)
 	        {
-	        	cell_data_d(0, 0, 0) = state(m_probe_idx_d[0], 0, 0, stIdx);
-	        	cell_data_d(1, 0, 0) = state(m_probe_idx_d[0] + 1, 0, 0, stIdx);
+	        	cell_data_d(0, 0, 0) = state(low_cell_idx_d[0],       0, 0, stIdx);
+	        	cell_data_d(1, 0, 0) = state(low_cell_idx_d[0] + 1, 0, 0, stIdx);
 	        }
 	#elif (AMREX_SPACEDIM == 2)
 	        {
-	        	cell_data_d(0, 0, 0) = state(m_probe_idx_d[0], m_probe_idx_d[1], 0, stIdx);
-	        	cell_data_d(1, 0, 0) =
-	            state(m_probe_idx_d[0] + 1, m_probe_idx_d[1], 0, stIdx);
-	        	cell_data_d(0, 1, 0) =
-	            state(m_probe_idx_d[0], m_probe_idx_d[1] + 1, 0, stIdx);
-	        	cell_data_d(1, 1, 0) =
-	            state(m_probe_idx_d[0] + 1, m_probe_idx_d[1] + 1, 0, stIdx);
+	        	cell_data_d(0, 0, 0) = state(low_cell_idx_d[0],       low_cell_idx_d[1],       0, stIdx);
+	        	cell_data_d(1, 0, 0) = state(low_cell_idx_d[0] + 1, low_cell_idx_d[1],       0, stIdx);
+	        	cell_data_d(0, 1, 0) = state(low_cell_idx_d[0],       low_cell_idx_d[1] + 1, 0, stIdx);
+	        	cell_data_d(1, 1, 0) = state(low_cell_idx_d[0] + 1, low_cell_idx_d[1] + 1, 0, stIdx);
 	        }
 	#else
 	        {
-	        	cell_data_d(0, 0, 0) =
-	            state(m_probe_idx_d[0], m_probe_idx_d[1], m_probe_idx_d[2], stIdx);
-	        	cell_data_d(1, 0, 0) =
-	            state(m_probe_idx_d[0] + 1, m_probe_idx_d[1], m_probe_idx_d[2], stIdx);
-	        	cell_data_d(0, 1, 0) =
-	            state(m_probe_idx_d[0], m_probe_idx_d[1] + 1, m_probe_idx_d[2], stIdx);
-	        	cell_data_d(1, 1, 0) = state(
-	        			m_probe_idx_d[0] + 1, m_probe_idx_d[1] + 1, m_probe_idx_d[2], stIdx);
+	        	cell_data_d(0, 0, 0) = state(low_cell_idx_d[0],       low_cell_idx_d[1],       low_cell_idx_d[2], stIdx);
+	        	cell_data_d(1, 0, 0) = state(low_cell_idx_d[0] + 1, low_cell_idx_d[1],       low_cell_idx_d[2], stIdx);
+	        	cell_data_d(0, 1, 0) = state(low_cell_idx_d[0],       low_cell_idx_d[1] + 1, low_cell_idx_d[2], stIdx);
+	        	cell_data_d(1, 1, 0) = state(low_cell_idx_d[0] + 1, low_cell_idx_d[1] + 1, low_cell_idx_d[2], stIdx);
 
-	        	cell_data_d(0, 0, 1) =
-	            state(m_probe_idx_d[0], m_probe_idx_d[1], m_probe_idx_d[2] + 1, stIdx);
-	        	cell_data_d(1, 0, 1) = state(
-	        			m_probe_idx_d[0] + 1, m_probe_idx_d[1], m_probe_idx_d[2] + 1, stIdx);
-	        	cell_data_d(0, 1, 1) = state(
-	        			m_probe_idx_d[0], m_probe_idx_d[1] + 1, m_probe_idx_d[2] + 1, stIdx);
-	        	cell_data_d(1, 1, 1) = state(
-	        			m_probe_idx_d[0] + 1, m_probe_idx_d[1] + 1, m_probe_idx_d[2] + 1, stIdx);
+	        	cell_data_d(0, 0, 1) = state(low_cell_idx_d[0],       low_cell_idx_d[1],       low_cell_idx_d[2] + 1, stIdx);
+	        	cell_data_d(1, 0, 1) = state(low_cell_idx_d[0] + 1, low_cell_idx_d[1],       low_cell_idx_d[2] + 1, stIdx);
+	        	cell_data_d(0, 1, 1) = state(low_cell_idx_d[0],       low_cell_idx_d[1] + 1, low_cell_idx_d[2] + 1, stIdx);
+	        	cell_data_d(1, 1, 1) = state(low_cell_idx_d[0] + 1, low_cell_idx_d[1] + 1, low_cell_idx_d[2] + 1, stIdx);
 	        }
 	#endif
 	        tmp_values_d[n] = LinearInterpolate(m_probe_loc_d, x_low_cell_d, cell_data_d, dx_finest_lev_probe_d);

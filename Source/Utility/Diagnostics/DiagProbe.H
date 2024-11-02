@@ -45,6 +45,7 @@ private:
   amrex::GpuArray<amrex::Real, AMREX_SPACEDIM> m_probe_loc; // probe location given by the user
   amrex::GpuArray<amrex::Real, AMREX_SPACEDIM> dx_finest_lev_probe; // grid size at lev=m_finest_level_probe
   amrex::GpuArray<amrex::Real, AMREX_SPACEDIM> x_low_cell; // lowerst corner of the cell in which probe is located
+  amrex::GpuArray<int, AMREX_SPACEDIM> low_cell_idx;
 
   // Interpolation data
   InterpType m_interpType; // Interpolation type ("CellCenter" or "Linear" only)
