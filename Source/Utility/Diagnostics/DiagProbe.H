@@ -30,10 +30,9 @@ public:
   void close() override {}
 
 private:
-  // Variables output
-  amrex::Vector<std::string> m_fieldNames; // variable names to be interpolated, as given by the user
-  amrex::Vector<int> m_fieldIndices; // variables to be interpolated, as given by the user
-  amrex::Vector<amrex::Real> m_values_at_probe; // variables to be interpolated, as given by the user
+  amrex::Vector<std::string> m_fieldNames;
+  amrex::Vector<int> m_fieldIndices;
+  amrex::Vector<amrex::Real> m_values_at_probe;
   amrex::Gpu::DeviceVector<int> m_fieldIndices_d;
   amrex::Gpu::DeviceVector<amrex::Real> m_values_at_probe_d;
 
@@ -42,18 +41,23 @@ private:
   int m_probe_idx[AMREX_SPACEDIM]; // The cell index of the cell in which probe
 
   // Probe definition
-  amrex::GpuArray<amrex::Real, AMREX_SPACEDIM> m_probe_loc; // probe location given by the user
-  amrex::GpuArray<amrex::Real, AMREX_SPACEDIM> dx_finest_lev_probe; // grid size at lev=m_finest_level_probe
-  amrex::GpuArray<amrex::Real, AMREX_SPACEDIM> x_low_cell; // lowerst corner of the cell in which probe is located
+  amrex::GpuArray<amrex::Real, AMREX_SPACEDIM>
+    m_probe_loc; // probe location given by the user
+  amrex::GpuArray<amrex::Real, AMREX_SPACEDIM>
+    dx_finest_lev_probe; // grid size at lev=m_finest_level_probe
+  amrex::GpuArray<amrex::Real, AMREX_SPACEDIM>
+    x_low_cell; // lowerst corner of the cell in which probe is located
   amrex::GpuArray<int, AMREX_SPACEDIM> low_cell_idx;
 
   // Interpolation data
-  InterpType m_interpType; // Interpolation type ("CellCenter" or "Linear" only)
-  amrex::Array3D<amrex::Real, 0, 1, 0, 1, 0, 1> cell_data{0.0}; // Neighbour cell solution values
+  InterpType m_interpType;
+  amrex::Array3D<amrex::Real, 0, 1, 0, 1, 0, 1> cell_data{
+    0.0}; // Neighbour cell solution values
 
   // Probe file name
   std::ofstream tmpProbeFile; // Ofstream object for writing probe file data
-  std::string tmpProbeFileName; // File name in which probe data is written. Hard coded to
+  std::string
+    tmpProbeFileName; // File name in which probe data is written. Hard coded to
 
   // 2D-plane boxArray vector
   amrex::Vector<amrex::BoxArray> m_probebox;     // probe box array (single box)
