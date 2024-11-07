@@ -1393,6 +1393,9 @@ ReactorCvode::react(
 
   initCvode(y, A, udata, NLS, LS, cvode_mem, time_start, ncells);
 
+
+
+
   // Update TypicalValues
   // NOLINTNEXTLINE(clang-analyzer-core.CallAndMessage)
   utils::set_sundials_solver_tols<Ordering>(
@@ -1417,7 +1420,11 @@ ReactorCvode::react(
         CVodeReInit(cvode_mem, time_start, y);
 
         BL_PROFILE_VAR("Pele::ReactorCvode::react():CVode", AroundCVODE);
-        CVode(cvode_mem, time_final, y, &CvodeActual_time_final, CV_NORMAL);
+        int cvode_ret_flag = CVode(cvode_mem, time_final, y, &CvodeActual_time_final, CV_NORMAL);
+        if(cvode_ret_flag==-1)
+        {
+        	amrex::AllPrint()<<"\nProblematic Box = "<<bx<<" "<<i<<" "<j<<" "k;
+        }
         BL_PROFILE_VAR_STOP(AroundCVODE);
 
         // cppcheck-suppress knownConditionTrueFalse
