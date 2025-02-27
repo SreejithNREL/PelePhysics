@@ -6014,6 +6014,7 @@ comp_qss_coeff(
   const amrex::Real refCinv = 1. / refC;
   // compute the mixture concentration
   amrex::Real mixture = 0.0;
+#pragma unroll
   for (int i = 0; i < 35; ++i) {
     mixture += sc[i];
   }
@@ -9926,6 +9927,7 @@ comp_qfqr(
 
   // compute the mixture concentration
   amrex::Real mixture = 0.0;
+#pragma unroll
   for (int i = 0; i < 35; ++i) {
     mixture += sc[i];
   }
@@ -11371,13 +11373,14 @@ productionRate(amrex::Real* wdot, const amrex::Real* sc, const amrex::Real T)
   // reference concentration: P_atm / (RT) in inverse mol/m^3
   const amrex::Real refC = 101325 / 8.31446 * invT;
   const amrex::Real refCinv = 1 / refC;
-
+#pragma unroll
   for (int i = 0; i < 35; ++i) {
     wdot[i] = 0.0;
   }
 
   // compute the mixture concentration
   amrex::Real mixture = 0.0;
+#pragma unroll
   for (int i = 0; i < 35; ++i) {
     mixture += sc[i];
   }
@@ -15191,13 +15194,14 @@ productionRate_light(
   // reference concentration: P_atm / (RT) in inverse mol/m^3
   const amrex::Real refC = 101325 / 8.31446 * invT;
   const amrex::Real refCinv = 1 / refC;
-
+#pragma unroll
   for (int i = 0; i < 35; ++i) {
     wdot[i] = 0.0;
   }
 
   // compute the mixture concentration
   amrex::Real mixture = 0.0;
+#pragma unroll
   for (int i = 0; i < 35; ++i) {
     mixture += sc[i];
   }
