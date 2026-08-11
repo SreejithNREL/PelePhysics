@@ -304,9 +304,10 @@ struct InitParm<transport::TransParm<eos::SRK, transport::SimpleTransport>>
     // research, 27(4), pp.671-679.
 
     // Initialize coefficients of model
+    amrex::Real Tci[NUM_SPECIES], Vci[NUM_SPECIES];
     {
-      amrex::Real tmp1[NUM_SPECIES], tmp2[NUM_SPECIES], tmp3[NUM_SPECIES];
-      GET_CRITPARAMS(tmp1, tmp2, tmp3, tparm->omega.data());
+      amrex::Real tmp2[NUM_SPECIES], tmp3[NUM_SPECIES];
+      GET_CRITPARAMS(Tci, tmp2, tmp3, tparm->omega.data(), Vci);
     }
 
     tparm->Afac[0] = 6.32402;
@@ -399,11 +400,19 @@ struct InitParm<transport::TransParm<eos::SRK, transport::SimpleTransport>>
         }
       }
     }
+    // Chung's paper (DOI: https://doi.org/10.1021/ie00076a024) reports
+    // calculating sigma and epsilon based on Vc and Tc respectively. Refer
+    // equations 4 and 5 in the paper.
+    amrex::Real sigChung[NUM_SPECIES], epsChung[NUM_SPECIES];
+    for (int i = 0; i < NUM_SPECIES; ++i) {
+      sigChung[i] = 0.809 * std::cbrt(Vci[i]);
+      epsChung[i] = Tci[i] / 1.2593;
+    }
     for (int i = 0; i < NUM_SPECIES; ++i) {
       for (int j = 0; j < NUM_SPECIES; ++j) {
         const int idx = i * NUM_SPECIES + j;
-        tparm->sqrtT2ij[idx] = std::sqrt(tparm->sig[i] * tparm->sig[j]);
-        tparm->sqrtEpsilonij[idx] = std::sqrt(tparm->eps[i] * tparm->eps[j]);
+        tparm->sqrtT2ij[idx] = std::sqrt(sigChung[i] * sigChung[j]);
+        tparm->sqrtEpsilonij[idx] = std::sqrt(epsChung[i] * epsChung[j]);
         tparm->sqrtMWij[idx] = std::sqrt(2.0 / (tparm->iwt[i] + tparm->iwt[j]));
         tparm->sqrtKappaij[idx] =
           std::sqrt(tparm->Kappai[i] * tparm->Kappai[j]);

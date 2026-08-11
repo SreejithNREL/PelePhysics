@@ -1656,116 +1656,117 @@ def red_dip(spec, species_transport):
 
 def critical_parameters(fstream, mechanism, species_info):
     """Write the critical parameters."""
+    # Critical volume for species taken from "The properties of gases and liquids", 5th Edition, Poling, Prausnitz and O'Connell (Appendix A)
     tabulated_critical_params = {
         "H2": {
             "Tci": 33.145,
             "Pci": 12.964,
-            "Vci": 64.2, #done: 1333-74-0    p2
+            "Vci": 64.2,  # done: 1333-74-0    p2
             "wt": 2.01588,
             "acentric_factor": -0.219,
         },
         "O2": {
             "Tci": 154.581,
             "Pci": 50.4304658,
-            "Vci": 73.37, # done: 7782-44-7    p2
+            "Vci": 73.37,  # done: 7782-44-7    p2
             "wt": 31.9988,
             "acentric_factor": 0.0222,
         },
         "H2O": {
             "Tci": 647.096,
             "Pci": 220.640,
-            "Vci": 55.95,   #7732-18-5 p2
+            "Vci": 55.95,  # 7732-18-5 p2
             "wt": 18.015340,
             "acentric_factor": 0.3443,
         },
         "N2": {
             "Tci": 126.192,
             "Pci": 33.958,
-            "Vci": 90.1,   #done:     7727-37-9    p2
+            "Vci": 90.1,  # done:     7727-37-9    p2
             "wt": 28.013400,
             "acentric_factor": 0.0372,
         },
         "CH4": {
             "Tci": 190.56,
             "Pci": 45.99,
-            "Vci": 98.6,    #done: 74-82-8    p2
+            "Vci": 98.6,  # done: 74-82-8    p2
             "wt": 16.043030,
             "acentric_factor": 0.011,
         },
         "C2H6": {
             "Tci": 305.32,
             "Pci": 48.72,
-            "Vci": 145.5,   #done: 74-84-0    p2
+            "Vci": 145.5,  # done: 74-84-0    p2
             "wt": 30.070120,
             "acentric_factor": 0.099,
         },
         "C3H8": {
             "Tci": 369.83,
             "Pci": 42.48,
-            "Vci": 200.0,   #done: 74-98-6    p2
+            "Vci": 200.0,  # done: 74-98-6    p2
             "wt": 44.097210,
             "acentric_factor": 0.152,
         },
         "CO2": {
             "Tci": 304.12,
             "Pci": 73.74,
-            "Vci": 94.07,   #done: 124-38-9    p2
+            "Vci": 94.07,  # done: 124-38-9    p2
             "wt": 44.009950,
             "acentric_factor": 0.225,
         },
         "He": {
             "Tci": 5.1953,
             "Pci": 2.2746,
-            "Vci":  57.3,   #done:  7440-59-7    p2
+            "Vci": 57.3,  # done:  7440-59-7    p2
             "wt": 4.002602,
             "acentric_factor": -0.382,
         },
         "CO": {
             "Tci": 132.85,
             "Pci": 34.94,
-            "Vci": 93.1,    #done: 630-08-0    p2
+            "Vci": 93.1,  # done: 630-08-0    p2
             "wt": 28.010,
             "acentric_factor": 0.045,
         },
         "AR": {
             "Tci": 150.86,
             "Pci": 48.98,
-            "Vci": 74.57,   #done: 7440-37-1    p2
+            "Vci": 74.57,  # done: 7440-37-1    p2
             "wt": 39.948,
             "acentric_factor": -0.002,
         },
         "NO": {
             "Tci": 180.0,
             "Pci": 64.80,
-            "Vci": 58.0,    #done: 10102-43-9    p2
+            "Vci": 58.0,  # done: 10102-43-9    p2
             "wt": 30.006,
             "acentric_factor": 0.582,
         },
         "CH3OH": {
             "Tci": 512.64,
             "Pci": 80.97,
-            "Vci": 118.0,   #done: 67-56-1 p2
+            "Vci": 118.0,  # done: 67-56-1 p2
             "wt": 32.042,
             "acentric_factor": 0.565,
         },
         "C2H2": {
             "Tci": 308.30,
             "Pci": 61.14,
-            "Vci": 112.2,   #done: 74-86-2    p2
+            "Vci": 112.2,  # done: 74-86-2    p2
             "wt": 26.038,
             "acentric_factor": 0.189,
         },
         "C2H4": {
             "Tci": 282.34,
             "Pci": 50.41,
-            "Vci": 131.10,  #done: 74-85-1    p2
+            "Vci": 131.10,  # done: 74-85-1    p2
             "wt": 28.054,
             "acentric_factor": 0.087,
         },
         "N2O": {
             "Tci": 309.60,
             "Pci": 72.55,
-            "Vci": 97.0,    #done: 10024-97-2 p2
+            "Vci": 97.0,  # done: 10024-97-2 p2
             "wt": 44.013,
             "acentric_factor": 0.162,
         },
@@ -1866,8 +1867,11 @@ def critical_parameters(fstream, mechanism, species_info):
                 f" SIG[{species.idx}] / (wt[{species.idx}]); ",
             )
             cw.writer(fstream, f"acentric_i[{species.idx}] = 0.0 ;")
-            cw.writer(fstream, f"Vci[{species.idx}] = 1.8887 * SIG[{species.idx}] *"
-            f" SIG[{species.idx}] * SIG[{species.idx}] ;",)        
+            cw.writer(
+                fstream,
+                f"Vci[{species.idx}] = 1.8887 * SIG[{species.idx}] *"
+                f" SIG[{species.idx}] * SIG[{species.idx}] ;",
+            )
 
     cw.writer(fstream)
     cw.writer(fstream, "}")
