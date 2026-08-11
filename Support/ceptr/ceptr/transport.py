@@ -1779,7 +1779,7 @@ def critical_parameters(fstream, mechanism, species_info):
         fstream,
         "AMREX_GPU_HOST_DEVICE AMREX_FORCE_INLINE void"
         " GET_CRITPARAMS(amrex::Real *  Tci, amrex::Real *  ai,"
-        " amrex::Real *  bi, amrex::Real *  acentric_i)",
+        " amrex::Real *  bi, amrex::Real *  acentric_i, amrex::Real *Vci)",
     )
     cw.writer(fstream, "{")
     cw.writer(fstream)
@@ -1836,6 +1836,11 @@ def critical_parameters(fstream, mechanism, species_info):
                 f"acentric_i[{species.idx}] ="
                 f" {tabulated_critical_params[species.name]['acentric_factor']:f} ;",
             )
+            cw.writer(
+                fstream,
+                f"Vci[{species.idx}] ="
+                f" {tabulated_critical_params[species.name]['Vci']:f} ;",
+            )
         else:
             cw.writer(fstream)
             cw.writer(
@@ -1861,6 +1866,8 @@ def critical_parameters(fstream, mechanism, species_info):
                 f" SIG[{species.idx}] / (wt[{species.idx}]); ",
             )
             cw.writer(fstream, f"acentric_i[{species.idx}] = 0.0 ;")
+            cw.writer(fstream, f"Vci[{species.idx}] = 1.8887 * SIG[{species.idx}] *"
+            f" SIG[{species.idx}] * SIG[{species.idx}] ;",)        
 
     cw.writer(fstream)
     cw.writer(fstream, "}")
