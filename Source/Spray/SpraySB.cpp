@@ -116,6 +116,7 @@ SprayParticleContainer::CreateSBDroplets(
           p.rdata(SprayComps::pstateFilmHght) = 0.;
           p.rdata(SprayComps::pstateN0) = num_dens0;
           p.rdata(SprayComps::pstateNumDens) = num_dens0;
+          setDryingCompDefaults(&p.rdata(0), T0);
           bool where = Where(p, pld);
           if (!where) {
             amrex::Abort("Bad reflected particle");
@@ -167,6 +168,7 @@ SprayParticleContainer::CreateSBDroplets(
           p.rdata(SprayComps::pstateFilmHght) = 0.;
           p.rdata(SprayComps::pstateN0) = N_s;
           p.rdata(SprayComps::pstateNumDens) = N_s;
+          setDryingCompDefaults(&p.rdata(0), T0);
           for (int dir = 0; dir < AMREX_SPACEDIM; ++dir) {
 #if AMREX_SPACEDIM == 3
             Real psi = rand * 2. * M_PI;

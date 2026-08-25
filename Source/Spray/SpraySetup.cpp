@@ -156,6 +156,41 @@ SprayParticleContainer::readSprayParams(int& particle_verbose)
     m_sprayData->do_breakup = breakup_model;
   }
 
+#ifdef PELE_SPRAY_DRYING
+  {
+    auto& dpr = m_sprayData->dryprops;
+    pp.query("drying_Rp_0", dpr.Rp_0);
+    pp.query("drying_Td_0", dpr.Td_0);
+    pp.query("drying_X0", dpr.X0);
+    pp.query("drying_rho_l", dpr.rho_l);
+    pp.query("drying_rho_s", dpr.rho_s);
+    pp.query("drying_Rs_0", dpr.Rs_0);
+    pp.query("drying_eps", dpr.eps);
+    pp.query("drying_d_pore", dpr.d_pore);
+    pp.query("drying_Dsl", dpr.Dsl);
+    pp.query("drying_Cs_crit_shell", dpr.Cs_crit_shell);
+    pp.query("drying_ini_thick", dpr.ini_thick);
+    pp.query("drying_fdt", dpr.fdt);
+    pp.query("drying_sidt", dpr.sidt);
+    pp.query("drying_smdt", dpr.smdt);
+    pp.query("drying_sldt", dpr.sldt);
+    pp.query("drying_V_rel", m_sprayData->drying_V_rel);
+    pp.query("drying_numr", dpr.numr);
+    pp.query("drying_numr_cr", dpr.numr_cr);
+    pp.query("drying_numr_wc", dpr.numr_wc);
+    if (
+      dpr.numr > SprayDrying::NR_MAX || dpr.numr_wc > SprayDrying::NR_MAX ||
+      dpr.numr_cr > SprayDrying::NR_CR_MAX) {
+      Abort("particles.drying_numr/_numr_wc must be <= SPRAY_DRYING_NR and "
+            "drying_numr_cr <= SprayDrying::NR_CR_MAX");
+    }
+    amrex::Print() << " Slurry drying model ON: Rp_0 = " << dpr.Rp_0
+                   << " m, Td_0 = " << dpr.Td_0 << " K, X0 = " << dpr.X0
+                   << ", numr = " << dpr.numr << ", numr_cr = " << dpr.numr_cr
+                   << ", V_rel = " << m_sprayData->drying_V_rel << " m/s\n";
+  }
+#endif
+
   // Set if spray ascii files should be written
   //
   pp.query("write_ascii_files", write_ascii_files);

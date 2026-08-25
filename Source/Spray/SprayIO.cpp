@@ -31,6 +31,35 @@ SprayParticleContainer::SprayParticleIO(
     real_comp_names[SprayComps::pstateBM2] = "unused2";
   }
   real_comp_names[SprayComps::pstateFilmHght] = "wall_film_height";
+#ifdef PELE_SPRAY_DRYING
+  {
+    const char* scal_names[16] = {"R_out",   "R_int",      "crust_thick",
+                                  "mass",    "mass0",      "m_solid",
+                                  "mdot",    "t",          "dt_cur",
+                                  "D_vap",   "k_eff",      "cp_eff",
+                                  "rho_eff", "vol_frac_l", "mfrac_s",
+                                  "d_sq"};
+    const char* int_names[8] = {"stage", "nr",     "nr_cr",  "nr_wc",
+                                "nstep", "nsub",   "lat_mid", "lat_late"};
+    int k = SprayComps::pstateDryState;
+    for (int n = 0; n < SprayDrying::NR_MAX; ++n) {
+      real_comp_names[k++] = "dry_T_" + std::to_string(n);
+    }
+    for (int n = 0; n < SprayDrying::NR_MAX; ++n) {
+      real_comp_names[k++] = "dry_C_" + std::to_string(n);
+    }
+    for (int n = 0; n < SprayDrying::NR_CR_MAX; ++n) {
+      real_comp_names[k++] = "dry_Tcr_" + std::to_string(n);
+    }
+    for (const auto* nm : scal_names) {
+      real_comp_names[k++] = std::string("dry_") + nm;
+    }
+    for (const auto* nm : int_names) {
+      real_comp_names[k++] = std::string("dry_") + nm;
+    }
+    AMREX_ALWAYS_ASSERT(k == SprayComps::pstateNum);
+  }
+#endif
   Vector<std::string> int_comp_names;
   Checkpoint(dir, "particles", is_checkpoint, real_comp_names, int_comp_names);
   // Here we write ascii information every time we write a plot file

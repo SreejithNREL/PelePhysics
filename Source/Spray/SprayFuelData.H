@@ -25,6 +25,19 @@
 #define SPRAY_FUEL_NUM_MANI_ONLY 0
 #endif
 
+#ifdef PELE_SPRAY_DRYING
+#ifndef PELE_SPRAY_DRYING_NR
+#define PELE_SPRAY_DRYING_NR 10
+#endif
+#if PELE_SPRAY_DRYING_NR < 2
+#error "PELE_SPRAY_DRYING_NR must be at least 2"
+#endif
+#include "SprayDrying.H"
+static_assert(
+  SprayDrying::NR_MAX == PELE_SPRAY_DRYING_NR,
+  "SprayDrying::NR_MAX must track PELE_SPRAY_DRYING_NR");
+#endif
+
 // Spray flags and indices
 struct SprayComps
 {
@@ -37,7 +50,13 @@ struct SprayComps
   static const int pstateBM1 = pstateN0 + 1;  // Breakup model variables
   static const int pstateBM2 = pstateBM1 + 1; // Breakup model variables
   static const int pstateFilmHght = pstateBM2 + 1;
+#ifdef PELE_SPRAY_DRYING
+  static const int pstateDryNR = PELE_SPRAY_DRYING_NR;
+  static const int pstateDryState = pstateFilmHght + 1;
+  static const int pstateNum = pstateDryState + SprayDrying::NDRY_REAL;
+#else
   static const int pstateNum = pstateFilmHght + 1;
+#endif
   int rhoIndx; // Component indices for conservative variable data structure
   int momIndx;
   int engIndx;
@@ -48,6 +67,21 @@ struct SprayComps
   int engSrcIndx;
   int specSrcIndx;
 };
+
+AMREX_GPU_HOST_DEVICE
+AMREX_FORCE_INLINE
+void
+setDryingCompDefaults(amrex::Real* pdata, const amrex::Real T_part)
+{
+#ifdef PELE_SPRAY_DRYING
+  for (int n = 0; n < SprayDrying::NDRY_REAL; ++n) {
+    pdata[SprayComps::pstateDryState + n] = 0.;
+  }
+  amrex::ignore_unused(T_part);
+#else
+  amrex::ignore_unused(pdata, T_part);
+#endif
+}
 
 enum splash_breakup {
   no_change = 0,
@@ -122,6 +156,11 @@ struct SprayData
   // Arrays only used for Manifold EOS
   amrex::GpuArray<int, SPRAY_FUEL_NUM_MANI_ONLY> dep_manifold_indx{};
   amrex::GpuArray<int, NUM_CHEM_SPECIES_MANI_ONLY> pc_manifold_indx{};
+
+#ifdef PELE_SPRAY_DRYING
+  SprayDrying::DryingProps dryprops;
+  amrex::Real drying_V_rel = 1.73;
+#endif
 
   // Instance of the liquid properties for the specified model
   pele::physics::SprayProps::LiqPropType liqprops;

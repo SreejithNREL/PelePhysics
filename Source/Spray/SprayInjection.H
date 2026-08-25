@@ -206,6 +206,7 @@ SprayParticleContainer::sprayInjectionfromDPMFile(
         p.rdata(SprayComps::pstateFilmHght) = 0.;
         p.rdata(SprayComps::pstateN0) = 2;
         p.rdata(SprayComps::pstateNumDens) = nppp;
+        setDryingCompDefaults(&p.rdata(0), temperature);
 
         bool where = Where(p, pld);
         if (!where) {
@@ -390,6 +391,7 @@ SprayParticleContainer::sprayInjection(
       p.rdata(SprayComps::pstateFilmHght) = 0.;
       p.rdata(SprayComps::pstateN0) = num_ppp;
       p.rdata(SprayComps::pstateNumDens) = num_ppp;
+      setDryingCompDefaults(&p.rdata(0), T_part);
       amrex::Real new_mass = cur_mass + num_ppp * pmass;
       bool where = Where(p, pld);
       if (!where) {
@@ -485,6 +487,7 @@ SprayParticleContainer::uniformSprayInit(
   part_vals[SprayComps::pstateBM1] = 0.;
   part_vals[SprayComps::pstateBM2] = initial_bm2;
   part_vals[SprayComps::pstateFilmHght] = 0.;
+  setDryingCompDefaults(part_vals, T_part);
   const amrex::RealVect dx_part(AMREX_D_DECL(
     Geom(level).ProbLength(0) / amrex::Real(num_part[0]),
     Geom(level).ProbLength(1) / amrex::Real(num_part[1]),

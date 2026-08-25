@@ -1,6 +1,10 @@
 #ifndef DRAG_H
 #define DRAG_H
 
+#ifdef PELE_SPRAY_DRYING
+#include "DryingSource.H"
+#endif
+
 // Compute the heat transfer coefficient using the
 // corrected Nusselt number and B_T value
 AMREX_GPU_DEVICE
@@ -356,6 +360,11 @@ calculateSpraySource(
   }
   amrex::Real T_part = p.rdata(SprayComps::pstateT);
   amrex::Real dia_part = p.rdata(SprayComps::pstateDia);
+
+#ifdef PELE_SPRAY_DRYING
+  amrex::ignore_unused(trans_parm, y_tab, T_part, dia_part);
+  return calculateDryingSource(flow_dt, gpv, fdat, p, num_ppp, vel_part);
+#endif
 
   // Storing Y_{d,n}
   for (int spf = 0; spf < SPRAY_FUEL_NUM; ++spf) {
