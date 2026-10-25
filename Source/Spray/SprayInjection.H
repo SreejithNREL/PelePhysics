@@ -209,9 +209,9 @@ SprayParticleContainer::sprayInjectionfromDPMFile(
 
         bool where = Where(p, pld);
         if (!where) {
-          amrex::Print() << "\n Problematic particle = " << p.pos(0) << " "
-                         << p.pos(1) << " " << p.pos(2);
-          // amrex::Abort("Bad injection particle");
+          amrex::Print() << "\nProblematic particle (particle outside fluid "
+                            "domain). Discarding it..";
+          continue;
         }
 
         std::pair<int, int> ind(pld.m_grid, pld.m_tile);
