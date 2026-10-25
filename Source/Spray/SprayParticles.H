@@ -41,6 +41,7 @@ public:
     : amrex::AmrParticleContainer<NSR_SPR, NSI_SPR, NAR_SPR, NAI_SPR>(amr)
   {
     init_bcs(phys_bc);
+    m_bndryLoss.resize(2, 0.0);
   }
 
   static void SprayCleanUp()
@@ -340,6 +341,16 @@ public:
   /// @param dir Name of restart directory
   void PostInitRestart(const std::string& dir = "");
 
+  /// \brief Number of spray jets
+  int numJets() const { return static_cast<int>(m_sprayJets.size()); }
+
+  /// \brief Const access to spray jet i (name, injected mass, ...)
+  const SprayJet* getJet(const int i) const { return m_sprayJets[i].get(); }
+
+  /// \brief Total mass [spray units] injected by jet i so far. Collective:
+  /// broadcast from the rank that does the injection for that jet.
+  amrex::Real getJetTotalInjMass(const int i) const;
+
   /// \brief Return the number of derived spray variables
   static int NumDeriveVars()
   {
@@ -354,6 +365,14 @@ public:
 
   /// \brief Return host spray data pointer
   static SprayData* getSprayData() { return m_sprayData; }
+
+  void getAndResetBndryLoss(amrex::Real& lost_mass, amrex::Real& lost_count);
+
+  /// \brief Liquid mass [spray units] of all active parcels (in flight and
+  /// wall film) and the parcel count, summed over levels and ranks.
+  /// Collective: call on all ranks.
+  void
+  liquidMass(amrex::Real& m_liq, amrex::Real& m_film, amrex::Real& nparc) const;
 
   /// \brief Return fuel species index
   static int getFuelIndx(const int pc)
@@ -399,6 +418,7 @@ private:
   bool reflect_lo[AMREX_SPACEDIM];
   bool reflect_hi[AMREX_SPACEDIM];
   amrex::Vector<std::unique_ptr<SprayJet>> m_sprayJets;
+  amrex::Gpu::DeviceVector<amrex::Real> m_bndryLoss;
 };
 
 #endif

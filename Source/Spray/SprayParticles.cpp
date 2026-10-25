@@ -191,6 +191,7 @@ SprayParticleContainer::updateParticles(
   const RealVect plo(AMREX_D_DECL(ploarr[0], ploarr[1], ploarr[2]));
   const RealVect phi(AMREX_D_DECL(phiarr[0], phiarr[1], phiarr[2]));
   const auto domain = this->Geom(level).Domain();
+  amrex::Real* bndry_loss = m_bndryLoss.data();
 #ifdef AMREX_USE_EB
   const auto& factory =
     dynamic_cast<EBFArrayBoxFactory const&>(state.Factory());
@@ -457,6 +458,20 @@ SprayParticleContainer::updateParticles(
                 bool left_dom = check_bounds(
                   p.pos(), plo, phi, dx, bndry_lo, bndry_hi, bflags);
                 if (left_dom) {
+                  if (isActive) {
+                    amrex::GpuArray<amrex::Real, SPRAY_FUEL_NUM> Yp;
+                    for (int spf = 0; spf < SPRAY_FUEL_NUM; ++spf) {
+                      Yp[spf] = p.rdata(SprayComps::pstateY + spf);
+                    }
+                    const amrex::Real dia = p.rdata(SprayComps::pstateDia);
+                    const amrex::Real rho =
+                      fdat->liqprops.rho_mix(Yp, p.rdata(SprayComps::pstateT));
+                    const amrex::Real pmass =
+                      p.rdata(SprayComps::pstateNumDens) * M_PI / 6.0 * rho *
+                      dia * dia * dia;
+                    Gpu::Atomic::Add(&bndry_loss[0], pmass);
+                    Gpu::Atomic::Add(&bndry_loss[1], amrex::Real(1.0));
+                  }
                   p.id() = -1;
                 } else {
                   Real film_h = 0.;
@@ -504,4 +519,60 @@ SprayParticleContainer::updateParticles(
       Gpu::streamSynchronize();
     } // for (int MyParIter pti..
   }
+}
+
+void
+SprayParticleContainer::getAndResetBndryLoss(Real& lost_mass, Real& lost_count)
+{
+  Gpu::HostVector<Real> h(2);
+  Gpu::copy(
+    Gpu::deviceToHost, m_bndryLoss.begin(), m_bndryLoss.end(), h.begin());
+  m_bndryLoss.assign(2, 0.0);
+  lost_mass = h[0];
+  lost_count = h[1];
+  ParallelAllReduce::Sum<Real>(
+    {lost_mass, lost_count}, ParallelContext::CommunicatorSub());
+}
+
+Real
+SprayParticleContainer::getJetTotalInjMass(const int i) const
+{
+  const SprayJet* js = m_sprayJets[i].get();
+  const int owner = js->m_use_Fluentdpmfile
+                      ? ParallelDescriptor::IOProcessorNumber()
+                      : js->Proc();
+  Real m = js->m_totalInjMass;
+  ParallelDescriptor::Bcast(&m, 1, owner);
+  return m;
+}
+
+void
+SprayParticleContainer::liquidMass(Real& m_liq, Real& m_film, Real& nparc) const
+{
+  const SprayData* fdat = d_sprayData;
+  ReduceOps<ReduceOpSum, ReduceOpSum, ReduceOpSum> reduce_ops;
+  auto r = ParticleReduce<ReduceData<Real, Real, Real>>(
+    *this,
+    [=] AMREX_GPU_DEVICE(
+      const ParticleType& p) noexcept -> GpuTuple<Real, Real, Real> {
+      if (p.id() <= 0) {
+        return {0.0, 0.0, 0.0};
+      }
+      GpuArray<Real, SPRAY_FUEL_NUM> Yp;
+      for (int spf = 0; spf < SPRAY_FUEL_NUM; ++spf) {
+        Yp[spf] = p.rdata(SprayComps::pstateY + spf);
+      }
+      const Real dia = p.rdata(SprayComps::pstateDia);
+      const Real rho = fdat->liqprops.rho_mix(Yp, p.rdata(SprayComps::pstateT));
+      const Real pmass =
+        p.rdata(SprayComps::pstateNumDens) * M_PI / 6.0 * rho * dia * dia * dia;
+      const bool is_film = p.rdata(SprayComps::pstateFilmHght) > 0.;
+      return {is_film ? 0.0 : pmass, is_film ? pmass : 0.0, 1.0};
+    },
+    reduce_ops);
+  m_liq = amrex::get<0>(r);
+  m_film = amrex::get<1>(r);
+  nparc = amrex::get<2>(r);
+  ParallelAllReduce::Sum<Real>(
+    {m_liq, m_film, nparc}, ParallelContext::CommunicatorSub());
 }
