@@ -128,6 +128,9 @@ SprayParticleContainer::sprayInjectionfromDPMFile(
       GotoLine(
         is_dpm1, lineno_current_dpm_time_begin); // Skip lines in dpm file till
                                                  // the current injection time
+      amrex::Real blk_mass_dpm = 0.0; // sum of DPM parcel_mass this block
+      amrex::Real blk_mass_pele =
+        0.0; // same parcels with Pele density, before correction
       for (ln = 0;
            ln <= lineno_current_dpm_time_end - lineno_current_dpm_time_begin;
            ln++) {
@@ -205,7 +208,29 @@ SprayParticleContainer::sprayInjectionfromDPMFile(
         p.rdata(SprayComps::pstateBM2) = 0;
         p.rdata(SprayComps::pstateFilmHght) = 0.;
         p.rdata(SprayComps::pstateN0) = 2;
-        p.rdata(SprayComps::pstateNumDens) = nppp;
+        amrex::Real nppp_inj = nppp;
+        {
+          // Pele liquid density at the injected T and Y (host copy of spray
+          // data)
+          amrex::Real Yloc[SPRAY_FUEL_NUM] = {0.0};
+          if (SPRAY_FUEL_NUM > 1 && set_part_Y) {
+            for (int spf = 0; spf < SPRAY_FUEL_NUM; ++spf) {
+              Yloc[spf] = Y_part[spf];
+            }
+          } else {
+            Yloc[0] = 1.0;
+          }
+          const amrex::Real rho_pele =
+            m_sprayData->liqprops.rho_mix(Yloc, temperature);
+          const amrex::Real pmass_pele =
+            M_PI / 6.0 * rho_pele * dia * dia * dia;
+          blk_mass_dpm += parcel_mass;
+          blk_mass_pele += nppp * pmass_pele;
+          if (spray_jet->dpm_conserve_mass() && pmass_pele > 0.0) {
+            nppp_inj = parcel_mass / pmass_pele;
+          }
+        }
+        p.rdata(SprayComps::pstateNumDens) = nppp_inj;
 
         bool where = Where(p, pld);
         if (!where) {
@@ -213,7 +238,6 @@ SprayParticleContainer::sprayInjectionfromDPMFile(
                          << p.pos(1) << " " << p.pos(2);
           // amrex::Abort("Bad injection particle");
         }
-
         std::pair<int, int> ind(pld.m_grid, pld.m_tile);
         host_particles[ind].push_back(p);
 
@@ -236,8 +260,15 @@ SprayParticleContainer::sprayInjectionfromDPMFile(
       if (m_verbose > 0) {
         amrex::Print() << "Injected " << ln << " particles through "
                        << spray_jet->jet_name()
-                       << " at flow time = " << spray_jet->m_nxt_inj_flw_time
-                       << "\n";
+                       << " at flow time = " << spray_jet->m_nxt_inj_flw_time;
+        if (blk_mass_dpm > 0.0) {
+          amrex::Print() << "(Pele/DPM liquid mass "
+                         << blk_mass_pele / blk_mass_dpm
+                         << (spray_jet->dpm_conserve_mass() ? ", nppp rescaled"
+                                                            : "")
+                         << ")";
+        }
+        amrex::Print() << "\n";
       }
       spray_jet->m_nxt_inj_flw_time += spray_jet->dt_dpm;
       spray_jet->m_cur_inj_dpm_time = spray_jet->m_nxt_inj_dpm_time;

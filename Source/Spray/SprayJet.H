@@ -97,6 +97,7 @@ public:
   amrex::Real get_avg_Y(const int spf) const { return m_jetY[spf]; }
 
   bool use_FluentDPMFile() const { return m_use_Fluentdpmfile; }
+  bool dpm_conserve_mass() const { return m_dpm_conserve_mass; }
 
   void set_initial_injection_flow_time(amrex::Real time)
   {
@@ -358,6 +359,7 @@ public:
   std::string m_FluentDPMFile;
   long int m_dpm_num_of_time_instants = 0;
   bool is_dpm_periodic = true;
+  bool m_dpm_conserve_mass = false;
 
   amrex::Real m_cur_inj_dpm_time =
     0.0; // The current DPM time at which injection has occurred
