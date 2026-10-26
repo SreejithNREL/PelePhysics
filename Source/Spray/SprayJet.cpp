@@ -20,6 +20,7 @@ SprayJet::SprayJet(const std::string& jet_name, const amrex::Geometry& geom)
         "dimensions other than 3, \n");
     }
     ps.get("dpm_filename", m_FluentDPMFile);
+    ps.query("dpm_conserve_mass", m_dpm_conserve_mass);
     std::ifstream is_dpm(m_FluentDPMFile, std::ios::in);
     if (!is_dpm.good()) {
       amrex::FileOpenFailed(m_FluentDPMFile);
