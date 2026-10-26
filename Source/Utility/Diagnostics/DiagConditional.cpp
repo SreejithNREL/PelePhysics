@@ -403,6 +403,9 @@ DiagConditional::writeIntegralDataToFile(
     const int nProcessFields = static_cast<int>(m_fieldIndices_d.size());
     amrex::Vector<int> widths(1 + nProcessFields, width);
 
+    // Bin centre first (as in the Average output), then the bin integral of
+    // the conditioning field, then the processed fields
+    condFile << std::left << std::setw(width) << "BinCenter" << " ";
     widths[0] =
       amrex::max<int>(width, static_cast<int>(m_cFieldName.length()) + 1);
     condFile << std::left << std::setw(widths[0]) << m_cFieldName << " ";
@@ -414,7 +417,10 @@ DiagConditional::writeIntegralDataToFile(
     }
     condFile << "\n";
 
+    const amrex::Real binWidth = (m_highBnd - m_lowBnd) / (m_nBins);
     for (int n{0}; n < m_nBins; ++n) {
+      condFile << std::left << std::setw(width) << std::setprecision(prec)
+               << std::scientific << m_lowBnd + (n + 0.5) * binWidth << " ";
       condFile << std::left << std::setw(widths[0]) << std::setprecision(prec)
                << std::scientific << a_condAbs[n] << " ";
       for (int f{0}; f < nProcessFields; ++f) {
@@ -454,6 +460,9 @@ DiagConditional::writeSumDataToFile(
     const int nProcessFields = static_cast<int>(m_fieldIndices_d.size());
     amrex::Vector<int> widths(1 + nProcessFields, width);
 
+    // Bin centre first (as in the Average output), then the bin integral of
+    // the conditioning field, then the processed fields
+    condFile << std::left << std::setw(width) << "BinCenter" << " ";
     widths[0] =
       amrex::max<int>(width, static_cast<int>(m_cFieldName.length()) + 1);
     condFile << std::left << std::setw(widths[0]) << m_cFieldName << " ";
@@ -465,7 +474,10 @@ DiagConditional::writeSumDataToFile(
     }
     condFile << "\n";
 
+    const amrex::Real binWidth = (m_highBnd - m_lowBnd) / (m_nBins);
     for (int n{0}; n < m_nBins; ++n) {
+      condFile << std::left << std::setw(width) << std::setprecision(prec)
+               << std::scientific << m_lowBnd + (n + 0.5) * binWidth << " ";
       condFile << std::left << std::setw(widths[0]) << std::setprecision(prec)
                << std::scientific << a_condAbs[n] << " ";
       for (int f{0}; f < nProcessFields; ++f) {

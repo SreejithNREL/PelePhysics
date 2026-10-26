@@ -153,3 +153,108 @@ SprayParticleContainer::computeDerivedVars(
 #endif
   }
 }
+
+void
+SprayParticleContainer::computeEulerianFields(
+  MultiFab& mf, const int level, const int dcomp)
+{
+  BL_PROFILE("SprayParticleContainer::computeEulerianFields()");
+  const int nfields = NumEulerianFields();
+  AMREX_ALWAYS_ASSERT(mf.nComp() >= dcomp + nfields);
+  AMREX_ALWAYS_ASSERT(OnSameGrids(level, mf));
+
+  // Component offsets; must match the order of EulerianFieldNames()
+  constexpr int NDENS = 0;
+  constexpr int VFRAC = 1;
+  constexpr int ADENS = 2;
+  constexpr int MDENS = 3;
+  constexpr int NFLX = 4;
+  constexpr int VFLX = NFLX + AMREX_SPACEDIM;
+  constexpr int AFLX = VFLX + AMREX_SPACEDIM;
+  constexpr int FILM = AFLX + AMREX_SPACEDIM;
+  constexpr int FUEL0 = FILM + 1;
+  constexpr int nfuel_fields = (SPRAY_FUEL_NUM > 1) ? SPRAY_FUEL_NUM : 0;
+  AMREX_ALWAYS_ASSERT(FUEL0 + nfuel_fields == nfields);
+
+  mf.setVal(0.0, dcomp, nfields, mf.nGrow());
+
+  const auto dxiarr = this->Geom(level).InvCellSizeArray();
+  const auto ploarr = this->Geom(level).ProbLoArray();
+  const RealVect dxi(AMREX_D_DECL(dxiarr[0], dxiarr[1], dxiarr[2]));
+  const RealVect plo(AMREX_D_DECL(ploarr[0], ploarr[1], ploarr[2]));
+  const Real inv_vol = AMREX_D_TERM(dxiarr[0], *dxiarr[1], *dxiarr[2]);
+#ifdef AMREX_USE_EB
+  const auto& factory = dynamic_cast<EBFArrayBoxFactory const&>(mf.Factory());
+  const auto* volfrac = &(factory.getVolFrac());
+#endif
+
+  for (MyParIter pti(*this, level); pti.isValid(); ++pti) {
+    const Long Np = pti.numParticles();
+    if (Np == 0) {
+      continue;
+    }
+    const ParticleType* pstruct = pti.GetArrayOfStructs()().data();
+    const SprayData* fdat = d_sprayData;
+    Array4<Real> const& arr = mf.array(pti, dcomp);
+    const Box vbx = pti.validbox();
+    bool eb_box = false;
+#ifdef AMREX_USE_EB
+    const auto& ebfab = static_cast<EBFArrayBox const&>(mf[pti]);
+    const EBCellFlagFab& flags = ebfab.getEBCellFlagFab();
+    Array4<const Real> vfrac_arr;
+    if (flags.getType(vbx) != FabType::regular) {
+      eb_box = true;
+      vfrac_arr = volfrac->const_array(pti);
+    }
+#endif
+    amrex::ParallelFor(Np, [=] AMREX_GPU_DEVICE(Long pid) noexcept {
+      const ParticleType& p = pstruct[pid];
+      if (p.id() <= 0) {
+        return;
+      }
+      const RealVect lxc = (p.pos() - plo) * dxi;
+      const IntVect ijkc = lxc.floor(); // cell containing the parcel
+      if (!vbx.contains(ijkc)) {
+        return;
+      }
+      GpuArray<Real, SPRAY_FUEL_NUM> Yp;
+      for (int spf = 0; spf < SPRAY_FUEL_NUM; ++spf) {
+        Yp[spf] = p.rdata(SprayComps::pstateY + spf);
+      }
+      const Real dia = p.rdata(SprayComps::pstateDia);
+      const Real rho = fdat->liqprops.rho_mix(Yp, p.rdata(SprayComps::pstateT));
+      const Real vol = M_PI / 6.0 * dia * dia * dia;
+      const Real area = M_PI * dia * dia;
+      Real w = p.rdata(SprayComps::pstateNumDens) * inv_vol;
+      if (eb_box) {
+#ifdef AMREX_USE_EB
+        // Per unit fluid volume, so that the vfrac-weighted volume integral
+        // recovers the parcel sum
+        const Real vf = vfrac_arr(ijkc);
+        if (vf > 0.0) {
+          w /= vf;
+        }
+#endif
+      }
+      if (p.rdata(SprayComps::pstateFilmHght) > 0.0) {
+        Gpu::Atomic::Add(&arr(ijkc, FILM), w * rho * vol);
+        return;
+      }
+      Gpu::Atomic::Add(&arr(ijkc, NDENS), w);
+      Gpu::Atomic::Add(&arr(ijkc, VFRAC), w * vol);
+      Gpu::Atomic::Add(&arr(ijkc, ADENS), w * area);
+      Gpu::Atomic::Add(&arr(ijkc, MDENS), w * rho * vol);
+      for (int dir = 0; dir < AMREX_SPACEDIM; ++dir) {
+        const Real u = p.rdata(SprayComps::pstateVel + dir);
+        Gpu::Atomic::Add(&arr(ijkc, NFLX + dir), w * u);
+        Gpu::Atomic::Add(&arr(ijkc, VFLX + dir), w * u * vol);
+        Gpu::Atomic::Add(&arr(ijkc, AFLX + dir), w * u * area);
+      }
+      if (nfuel_fields > 0) {
+        for (int spf = 0; spf < nfuel_fields; ++spf) {
+          Gpu::Atomic::Add(&arr(ijkc, FUEL0 + spf), w * Yp[spf] * rho * vol);
+        }
+      }
+    });
+  }
+}
