@@ -363,6 +363,50 @@ public:
     return m_sprayDeriveVars;
   }
 
+  /// \brief Names of the additive Eulerian spray fields filled by
+  /// #computeEulerianFields, in component order:
+  /// spray_ndens, spray_vfrac, spray_adens, spray_mdens,
+  /// spray_nflx_{x,y,z}, spray_vflx_{x,y,z}, spray_aflx_{x,y,z},
+  /// spray_film_mdens and, if SPRAY_FUEL_NUM > 1, spray_mdens_<fuel>.
+  static amrex::Vector<std::string> EulerianFieldNames()
+  {
+    const amrex::Vector<std::string> dirs{AMREX_D_DECL("x", "y", "z")};
+    amrex::Vector<std::string> names{
+      "spray_ndens", "spray_vfrac", "spray_adens", "spray_mdens"};
+    for (const std::string q : {"nflx", "vflx", "aflx"}) {
+      for (const auto& d : dirs) {
+        names.push_back("spray_" + q + "_" + d);
+      }
+    }
+    names.push_back("spray_film_mdens");
+#if SPRAY_FUEL_NUM > 1
+    for (const auto& fuel : m_sprayFuelNames) {
+      names.push_back("spray_mdens_" + fuel);
+    }
+#endif
+    return names;
+  }
+
+  /// \brief Number of additive Eulerian spray fields
+  static int NumEulerianFields()
+  {
+    return static_cast<int>(EulerianFieldNames().size());
+  }
+
+  /// \brief Deposit additive, per-volume Eulerian fields of the parcels
+  /// living on `level` into mf components [dcomp, dcomp+NumEulerianFields()).
+  ///
+  /// Every field is a sum over the parcels in a cell divided by the (fluid)
+  /// cell volume, so fields can be summed in time and integrated in space;
+  /// ratios (D32, mean velocity, ...) are formed afterwards. Each parcel
+  /// contributes once, to the cell containing it on its own (finest) level;
+  /// coarse cells covered by finer levels are zero (no virtual particles),
+  /// which is consistent with composite (covered-masked) integrals. Wall-film
+  /// parcels only contribute to spray_film_mdens. Only valid cells are
+  /// written; the caller fills ghost cells.
+  void
+  computeEulerianFields(amrex::MultiFab& mf, const int level, const int dcomp);
+
   /// \brief Return host spray data pointer
   static SprayData* getSprayData() { return m_sprayData; }
 
